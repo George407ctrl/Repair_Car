@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Автомастерская</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:system-ui,-apple-system,sans-serif;touch-action:none}
+canvas{display:block}
+#cross{position:fixed;left:50%;top:50%;width:8px;height:8px;margin:-4px;border-radius:50%;background:#fff;box-shadow:0 0 0 1.5px rgba(0,0,0,.65);pointer-events:none}
+#lab,#ts{position:fixed;left:50%;transform:translateX(-50%);color:#fff;text-align:center;pointer-events:none;border-radius:8px;background:rgba(0,0,0,.45);padding:4px 12px;max-width:92vw;text-shadow:0 1px 2px #000}
+#lab{top:calc(50% - 44px);font-size:14px}#lab:empty{display:none}
+#ts{top:32%;font-size:17px;opacity:0;transition:opacity .25s;background:rgba(0,0,0,.65)}
+#hud{position:fixed;top:max(8px,env(safe-area-inset-top));left:8px;right:8px;display:flex;gap:8px;align-items:flex-start;pointer-events:none}
+#money{background:rgba(0,0,0,.6);color:#7dff6b;font-weight:700;font-size:18px;padding:7px 12px;border-radius:10px;white-space:nowrap}
+#hint{flex:1;text-align:center;background:rgba(0,0,0,.65);color:#ffe14a;font-weight:700;font-size:16px;line-height:1.25;padding:8px 12px;border-radius:10px;border:1px solid rgba(255,225,74,.35)}#hint:empty{display:none}
+#ord{position:fixed;top:calc(max(8px,env(safe-area-inset-top)) + 68px);left:8px;width:min(250px,64vw);background:rgba(0,0,0,.5);color:#ddd;font-size:12.5px;line-height:1.4;padding:8px 10px;border-radius:10px;pointer-events:none}
+#ord ul{list-style:none;margin:4px 0 0;padding:0}#ord .d{color:#7dff6b;text-decoration:line-through;opacity:.8}#ord .c{color:#ffe14a;font-weight:700}
+#jb{position:fixed;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.3);display:none;pointer-events:none}
+#jk{position:absolute;left:32px;top:32px;width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.35)}
+#bar{position:fixed;left:50%;bottom:max(10px,env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:8px}
+.s{width:min(30vw,140px);padding:10px 6px;border-radius:10px;background:rgba(20,22,26,.7);color:#ddd;border:2px solid rgba(255,255,255,.2);font-size:14px;line-height:1.2;text-align:center;cursor:pointer}
+.s.on{border-color:#ffb020;background:rgba(255,176,32,.28);color:#fff}
+.s.pl{animation:sp 1s ease-in-out infinite}
+@keyframes sp{50%{border-color:#ffe14a;box-shadow:0 0 16px #ffe14a;color:#fff}}
+#ab{position:fixed;left:50%;margin-left:-50px;top:calc(50% + 64px);width:100px;height:100px;border-radius:50%;background:rgba(20,22,26,.8);box-shadow:0 0 0 2px rgba(255,225,74,.5),0 4px 18px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .15s,transform .1s;touch-action:none}
+#ab.on{opacity:1;animation:pu 1.1s ease-in-out infinite}
+body.t #ab.on{pointer-events:auto}
+#ab.h{animation:none;transform:scale(.92);background:rgba(70,58,10,.92)}
+body.t #ab{left:auto;right:max(18px,env(safe-area-inset-right));margin:0;top:auto;bottom:150px}
+@keyframes pu{50%{transform:scale(1.07)}}
+#ab svg{position:absolute;inset:0;width:100%;height:100%}
+#at{position:relative;font-weight:800;color:#fff;text-align:center;padding:0 10px;line-height:1.1}
+#st{position:fixed;inset:0;z-index:5;background:rgba(10,12,16,.85);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;gap:10px}
+#st h1{margin:0;font-size:30px}#st p{margin:0;max-width:540px;font-size:14px;line-height:1.5;color:#cfd3d8}
+#go{margin-top:8px;padding:14px 38px;font-size:18px;border:0;border-radius:10px;background:#ffb020;color:#111;font-weight:700;cursor:pointer}
+#side{position:fixed;right:8px;top:calc(max(8px,env(safe-area-inset-top)) + 68px);display:flex;flex-direction:column;gap:6px;z-index:3}
+.ib{font:700 12px system-ui,sans-serif;padding:7px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.3);background:rgba(20,22,26,.72);color:#fff;cursor:pointer}
+.ib.off{color:#999}.k{display:none;opacity:.6;font-weight:400}body:not(.t) .k{display:inline}
+#ord{width:min(250px,56vw)}body.nh #hint{display:none}
+#shop{position:fixed;inset:0;z-index:7;background:rgba(10,12,16,.93);color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px;overflow:auto}
+.it{display:flex;gap:10px;align-items:center;justify-content:space-between;width:min(460px,92vw);background:rgba(255,255,255,.08);border-radius:10px;padding:10px 12px;font-size:14px}.it small{display:block;color:#aab;font-size:12px;margin-top:2px}
+#pk{position:fixed;inset:0;z-index:8;background:rgba(10,12,16,.93);color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px;overflow:auto}
+
+#rotn{display:none}
+@media (orientation:landscape) and (max-height:520px){
+ body.t #hud{top:max(4px,env(safe-area-inset-top));left:max(8px,env(safe-area-inset-left));right:max(8px,env(safe-area-inset-right))}
+ body.t #money{font-size:15px;padding:5px 9px}
+ body.t #hint{font-size:13px;padding:5px 9px;max-width:50vw;margin:0 auto}
+ body.t #ord{top:46px;left:max(8px,env(safe-area-inset-left));width:200px;font-size:11px;padding:5px 8px;max-height:44vh;overflow:hidden}
+ body.t #side{top:46px;right:max(8px,env(safe-area-inset-right));flex-direction:row;gap:4px}
+ body.t .ib{padding:5px 7px;font-size:11px}
+ body.t #bar{left:auto;right:max(10px,env(safe-area-inset-right));bottom:max(10px,env(safe-area-inset-bottom));transform:none;flex-direction:column;gap:6px}
+ body.t .s{width:104px;padding:9px 4px;font-size:12px}
+ body.t #ab{right:calc(max(10px,env(safe-area-inset-right)) + 118px);bottom:max(14px,env(safe-area-inset-bottom));width:104px;height:104px;margin:0}
+ body.t #lab{top:calc(50% - 38px);font-size:12px}
+ body.t #ts{top:22%;font-size:14px}
+ #st{padding:8px;gap:5px;overflow:auto;justify-content:flex-start}
+ #st h1{font-size:20px}#st p{font-size:11.5px;line-height:1.35}#go{padding:9px 28px;font-size:15px;margin-top:2px}
+ #shop,#pk{justify-content:flex-start;padding:8px;gap:6px}
+}
+</style></head><body>
+<div id="cross"></div><div id="lab"></div><div id="ts"></div>
+<div id="hud"><div id="money">$ 0</div><div id="hint"></div></div>
+<div id="ord"><b id="ot"></b><br><span id="od"></span><ul id="ol"></ul></div><div id="side"><button class="ib" data-a="hint"></button><button class="ib" data-a="shop"></button><button class="ib" data-a="snd"></button></div><div id="shop"></div><div id="pk"></div>
+<div id="ab"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="8"/><circle id="rg" cx="50" cy="50" r="44" fill="none" stroke="#ffe14a" stroke-width="8" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="276.5" transform="rotate(-90 50 50)"/></svg><span id="at"></span></div>
+<div id="jb"><div id="jk"></div></div>
+<div id="bar"><div class="s on">1. Руки</div><div class="s">2. Гайковерт</div><div class="s">3. Канистра масла</div></div>
+<div id="st"><h1>Автомастерская</h1>
+<p><b>ПК:</b> WASD — ходьба, мышь — обзор, Shift — бег, 1–3 или колесо мыши — слоты. Действие: <b>удерживайте ЛКМ или E</b>.<br><b>Телефон:</b> левый джойстик — ходьба, свайп справа — обзор, действие — <b>удерживайте большую кнопку</b> справа.</p>
+<p><b>Телефон лучше держать горизонтально:</b> слева джойстик, справа внизу — слоты и кнопка действия.</p>
+<p>Заказ №1: замена спущенного колеса. Следуйте жёлтым подсказкам вверху: поднимите машину, открутите болты, снимите колесо, выбросите в контейнер, возьмите новое со стеллажа, установите, закрутите болты, опустите машину и сдайте работу на терминале — получите $150.</p>
+<p>Дальше идут новые заказы: масло (слот 3 — канистра), колёса и комбинированные — с разной оплатой. На заработанное улучшайте инструмент в магазине. Клавиши: <b>H</b> — подсказки, <b>B</b> — магазин, <b>M</b> — звук.</p><button id="go">Играть</button><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"><button class="ib" data-a="hint"></button><button class="ib" data-a="snd"></button><button class="ib" data-a="shop"></button></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=i=>document.getElementById(i),PI=Math.PI,cl=(v,a,b)=>Math.max(a,Math.min(b,v)),U=s=>s[0].toUpperCase()+s.slice(1);
+let touch=matchMedia('(pointer:coarse)').matches,started=false,locked=false;
+if(touch)document.body.classList.add('t');
+const R=new THREE.WebGLRenderer({antialias:true});
+R.setPixelRatio(Math.min(devicePixelRatio||1,touch?1.5:2));
+R.outputEncoding=THREE.sRGBEncoding;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.15;
+R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;R.autoClear=false;
+const cv0=R.domElement;document.body.prepend(cv0);
+const scene=new THREE.Scene(),world=new THREE.Group(),cam=new THREE.PerspectiveCamera(70,1,.05,60);
+scene.background=new THREE.Color(0x15181c);cam.rotation.order='YXZ';scene.add(world);
+
+const ENV=(()=>{const es=new THREE.Scene(),hv=c=>new THREE.MeshBasicMaterial({color:c});es.add(new THREE.Mesh(new THREE.BoxGeometry(30,14,30),new THREE.MeshBasicMaterial({color:0x66707e,side:2})));
+ const fl_=new THREE.Mesh(new THREE.PlaneGeometry(30,30),hv(0x202226));fl_.rotation.x=-PI/2;fl_.position.y=-6.9;es.add(fl_);
+ [[-6,6.8,-4],[6,6.8,-4],[-6,6.8,5],[6,6.8,5],[0,6.8,0]].forEach(([x,y,z])=>{const m=new THREE.Mesh(new THREE.BoxGeometry(5,.1,1.2),hv(new THREE.Color(5,5,4.6)));m.position.set(x,y,z);es.add(m)});
+ const w2=new THREE.Mesh(new THREE.BoxGeometry(.1,5,8),hv(new THREE.Color(2.2,2.3,2.6)));w2.position.set(-14,2,0);es.add(w2);
+ return new THREE.PMREMGenerator(R).fromScene(es,.03).texture})();
+const mc={},M=(c,r=.7,m=0,d=0)=>mc[[c,r,m,d]]||(mc[[c,r,m,d]]=new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m,side:d?2:0,envMap:m>=.3?ENV:null,envMapIntensity:1.1}));
+const mk=(g,m,x,y,z,p)=>{const o=new THREE.Mesh(g,m.isMaterial||Array.isArray(m)?m:M(m));o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;(p||world).add(o);return o};
+const B=(w,h,d,m,x,y,z,p)=>mk(new THREE.BoxGeometry(w,h,d),m,x,y,z,p);
+const C=(rt,rb,h,m,x,y,z,p,s=16)=>mk(new THREE.CylinderGeometry(rt,rb,h,s),m,x,y,z,p);
+const G=(x=0,y=0,z=0,p)=>{const g=new THREE.Group();g.position.set(x,y,z);(p||world).add(g);return g};
+const tag=(o,d)=>o.traverse(m=>{if(m.isMesh)m.userData=d});
+const hp=(o,r)=>{const h=new THREE.Mesh(new THREE.SphereGeometry(r,6,4),M(0));h.visible=false;o.add(h)};
+const GY=new THREE.MeshBasicMaterial({color:0xffe14a,transparent:true,opacity:.3,depthWrite:false}),GN=new THREE.MeshBasicMaterial({color:0x4dff7a,transparent:true,opacity:.3,depthWrite:false}),glows=[];
+const glow=(p,geo,x,y,z,k,m)=>{const o=new THREE.Mesh(geo,m||GY);o.position.set(x,y,z);o.visible=false;o.raycast=()=>{};o.gk=k;p.add(o);glows.push(o);return o};
+const col=[],wall=(x,z,w,d)=>col.push([x-w/2,z-d/2,x+w/2,z+d/2]);
+const cnv=(w,h,f)=>{const c=document.createElement('canvas');c.width=w;c.height=h;f(c.getContext('2d'),w,h);return c};
+const tx=(c,rx,ry)=>{const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(rx,ry);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t};
+const RG=(w,h,d,r)=>{const sg=v=>Math.min(24,Math.max(2,Math.ceil(v/(r*1.5)))),g=new THREE.BoxGeometry(w,h,d,sg(w),sg(h),sg(d)),p=g.attributes.position,nr=g.attributes.normal,v=new THREE.Vector3(),q=new THREE.Vector3();
+ for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i);q.set(cl(v.x,-w/2+r,w/2-r),cl(v.y,-h/2+r,h/2-r),cl(v.z,-d/2+r,d/2-r));v.sub(q).normalize();nr.setXYZ(i,v.x,v.y,v.z);p.setXYZ(i,q.x+v.x*r,q.y+v.y*r,q.z+v.z*r)}return g};
+const RX=(w,h,d,r,m,x,y,z,p)=>mk(RG(w,h,d,r),m,x,y,z,p);
+const tireTex=(()=>{const t=new THREE.CanvasTexture(cnv(1024,256,(g,w,h)=>{g.fillStyle='#1c1c1e';g.fillRect(0,0,w,h);
+ for(let i=0;i<9000;i++){g.fillStyle='rgba('+(Math.random()<.5?'255,255,255':'0,0,0')+','+Math.random()*.06+')';g.fillRect(Math.random()*w,Math.random()*h,2,2)}
+ g.fillStyle='#29292c';for(let x=0;x<w;x+=16){g.fillRect(x,0,9,38);g.fillRect(x+5,h-38,9,38)}
+ g.strokeStyle='#303034';g.lineWidth=2;[.13,.2,.31,.37,.63,.69,.8,.87].forEach(f=>{g.beginPath();g.moveTo(0,h*f);g.lineTo(w,h*f);g.stroke()});
+ g.textBaseline='middle';[.25,.75].forEach(f=>{g.fillStyle='#b4b4b9';g.save();g.translate(20,h*f);g.scale(1.7,1);g.font='bold 30px Arial';g.fillText('TURBOGRIP SPORT 255/35 ZR19',0,0);g.restore();
+  g.fillStyle='#8c8c91';g.save();g.translate(20,h*f+25);g.scale(1.7,1);g.font='bold 15px Arial';g.fillText('98Y  TUBELESS  TREADWEAR 280  TRACTION AA',0,0);g.restore();
+  g.fillStyle='#e0e0e4';for(let i=0;i<3;i++)g.fillRect(i*340+40,h*f-40,10,7)});}));
+ t.wrapS=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t})();
+const tireM=new THREE.MeshStandardMaterial({map:tireTex,roughness:.9});
+const castTx=tx(cnv(256,256,(g,w,h)=>{g.fillStyle='#c8ccd0';g.fillRect(0,0,w,h);
+ for(let i=0;i<14000;i++){g.fillStyle=Math.random()<.5?'rgba(0,0,0,'+Math.random()*.22+')':'rgba(255,255,255,'+Math.random()*.2+')';g.fillRect(Math.random()*w,Math.random()*h,1+Math.random()*2,1+Math.random()*2)}
+ for(let i=0;i<160;i++){g.fillStyle='rgba(20,22,25,.35)';g.beginPath();g.arc(Math.random()*w,Math.random()*h,Math.random()*1.6+.4,0,PI*2);g.fill()}
+ g.strokeStyle='rgba(0,0,0,.08)';for(let i=0;i<30;i++){g.beginPath();g.moveTo(Math.random()*w,Math.random()*h);g.lineTo(Math.random()*w,Math.random()*h);g.stroke()}}),2,2);
+const castC={},cast=(c,r=.55,m=.85)=>castC[[c,r,m]]||(castC[[c,r,m]]=new THREE.MeshStandardMaterial({color:c,map:castTx,roughness:r,metalness:m,envMap:ENV,envMapIntensity:1.1}));
+const LENS=new THREE.MeshStandardMaterial({color:0xffffff,transparent:true,opacity:.26,roughness:.04,metalness:.2,envMap:ENV,envMapIntensity:1.4,depthWrite:false}),REFM=M(0xe8ebef,.05,1),SEAT=M(0x2b2f36,.8),SCR=new THREE.MeshStandardMaterial({color:0x06121c,emissive:0x1a6aa8,emissiveIntensity:.8,roughness:.3});
+
+
+const fc=cnv(256,256,(g,w,h)=>{g.fillStyle='#777a7e';g.fillRect(0,0,w,h);for(let i=0;i<3000;i++){g.fillStyle='rgba(0,0,0,'+Math.random()*.14+')';g.fillRect(Math.random()*w,Math.random()*h,2,2)}g.strokeStyle='#4a4d51';g.lineWidth=4;g.strokeRect(0,0,w,h)});
+const wc=cnv(256,256,(g,w,h)=>{g.fillStyle='#cdd0d4';g.fillRect(0,0,w,h);g.fillStyle='#2f4560';g.fillRect(0,h*.7,w,h*.3);g.fillStyle='#e2a91c';g.fillRect(0,h*.68,w,h*.02);g.strokeStyle='rgba(0,0,0,.18)';g.lineWidth=2;for(let x=0;x<=w;x+=128){g.beginPath();g.moveTo(x,0);g.lineTo(x,h);g.stroke()}for(let i=0;i<1500;i++){g.fillStyle='rgba(0,0,0,'+Math.random()*.08+')';g.fillRect(Math.random()*w,h*(.5+Math.random()*.5),2,3)}});
+const fm=new THREE.Mesh(new THREE.PlaneGeometry(16,14),new THREE.MeshStandardMaterial({map:tx(fc,8,7),roughness:.9}));fm.rotation.x=-PI/2;fm.receiveShadow=true;world.add(fm);
+const W=(len,x,z,ry)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(len,5),new THREE.MeshStandardMaterial({map:tx(wc,len/4,1),roughness:.9}));m.position.set(x,2.5,z);m.rotation.y=ry;m.receiveShadow=true;world.add(m)};
+W(16,0,-7,0);W(16,0,7,PI);W(14,-8,0,PI/2);W(14,8,0,-PI/2);
+const ce=new THREE.Mesh(new THREE.PlaneGeometry(16,14),M(0xaeb2b8,.9));ce.rotation.x=PI/2;ce.position.y=5;world.add(ce);
+
+scene.add(new THREE.HemisphereLight(0xe6eeff,0x4a4d52,.9));
+const lm=new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xfff4e0,emissiveIntensity:1.3});
+[[-4,-3.5],[4,-3.5],[-4,3.5],[4,3.5],[0,0]].forEach(([x,z])=>{B(2.3,.04,.36,0x2b2e33,x,4.84,z);B(2.1,.05,.28,lm,x,4.8,z);const l=new THREE.PointLight(0xfff0dc,.8,13,2);l.position.set(x,4.5,z);scene.add(l)});
+const sp=new THREE.SpotLight(0xfff6e8,1.2,16,.9,.6,1);sp.position.set(1.5,4.6,3);sp.target.position.set(0,.5,0);sp.castShadow=true;sp.shadow.mapSize.set(1024,1024);sp.shadow.bias=-.0004;scene.add(sp,sp.target);
+{const el=new THREE.PointLight(0xfff2e0,.6,5,2);el.position.set(0,1.7,2.9);scene.add(el);const wl=new THREE.PointLight(0xdde8ff,.35,4,2);wl.position.set(-2.2,.9,1.3);scene.add(wl);const ub=new THREE.PointLight(0xfff0dc,.9,2.6,2);ub.position.set(0,1.25,1.5);scene.add(ub);const dlc=new THREE.DirectionalLight(0xfff6ea,.55);dlc.position.set(0,4.8,1);dlc.target.position.set(0,0,0);scene.add(dlc,dlc.target)}
+for(let z=-6;z<=6;z+=3)B(16,.3,.25,0x4a4f55,0,4.85,z);
+
+const stl=M(0x2f333a,.5,.6),chr=M(0xc9ced4,.25,.9),wood=M(0x8a6a44,.8),DK=M(0x1a1a1c,.8),YL=M(0xe3b21e,.6);
+B(4.8,3.6,.1,0x23262a,0,1.8,-6.96);
+for(let i=0;i<15;i++)B(4.5,.21,.06,M(0xb7bcc3,.45,.5),0,.14+i*.23,-6.92);
+[-2.4,2.4].forEach(x=>B(.12,3.5,.1,0x44484e,x,1.75,-6.92));B(4.9,.12,.12,0x44484e,0,3.55,-6.92);
+const sg=cnv(512,128,(g,w,h)=>{g.fillStyle='#1b2a41';g.fillRect(0,0,w,h);g.strokeStyle='#e2a91c';g.lineWidth=6;g.strokeRect(6,6,w-12,h-12);g.fillStyle='#e2a91c';g.font='bold 46px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('АВТОМАСТЕРСКАЯ',w/2,h/2+3)});
+const sgt=new THREE.CanvasTexture(sg);sgt.encoding=THREE.sRGBEncoding;
+const sgm=new THREE.Mesh(new THREE.PlaneGeometry(4,1),new THREE.MeshBasicMaterial({map:sgt}));sgm.position.set(0,4.1,-6.97);world.add(sgm);
+B(1.3,2.45,.06,0x2a2c2f,5.5,1.22,6.97);B(1.1,2.3,.08,M(0x4d5f4a,.6,.3),5.5,1.15,6.93);B(.1,.03,.05,chr,5.1,1.1,6.87);
+const gl=new THREE.MeshBasicMaterial({color:0x9fc8ff}),fr=M(0x3a3d42,.5,.4);
+const win=(x,y,z,ry)=>{const g=G(x,y,z);g.rotation.y=ry;B(1.6,.9,.03,gl,0,0,0,g);B(1.7,.06,.08,fr,0,.48,0,g);B(1.7,.06,.08,fr,0,-.48,0,g);B(.06,1,.08,fr,-.82,0,0,g);B(.06,1,.08,fr,.82,0,0,g);B(.04,.9,.05,fr,0,0,0,g);B(1.6,.04,.05,fr,0,0,0,g)};
+win(-5,2.8,6.96,0);win(0,2.8,6.96,0);win(-5.5,2.8,-6.96,0);win(5.5,2.8,-6.96,0);win(-7.96,2.8,2,PI/2);win(-7.96,2.8,5,PI/2);win(7.96,2.8,3.5,PI/2);
+
+B(6.6,.01,.12,YL,0,.006,-3);B(6.6,.01,.12,YL,0,.006,3);B(.12,.01,6,YL,-3.3,.006,0);B(.12,.01,6,YL,3.3,.006,0);
+[[-.6,1.6,.5],[1.2,-1.4,.3]].forEach(([x,z,r])=>{const s=new THREE.Mesh(new THREE.CircleGeometry(r,24),new THREE.MeshStandardMaterial({color:0x101010,roughness:.3,transparent:true,opacity:.5}));s.rotation.x=-PI/2;s.position.set(x,.004,z);world.add(s)});
+
+B(.75,.06,2.4,wood,-7.55,.93,-3.5);B(.7,.04,2.3,M(0x50555c,.6,.4),-7.55,.25,-3.5);B(.04,.14,2.4,stl,-7.2,.86,-3.5);
+[-7.9,-7.2].forEach(x=>[-4.6,-2.4].forEach(z=>B(.06,.9,.06,stl,x,.45,z)));
+B(.16,.12,.22,M(0x2a4d8a,.5,.5),-7.35,1.02,-4.3);B(.04,.1,.22,stl,-7.27,1.03,-4.3);
+B(.03,.03,.32,wood,-7.5,.975,-3.0).rotation.y=.4;B(.1,.04,.04,chr,-7.5,.99,-2.88);
+B(.35,.05,.45,M(0x888d93),-7.5,.985,-3.9);C(.035,.035,.18,M(0xd62828),-7.6,1.05,-2.7);C(.04,.04,.12,M(0x3b7fd1),-7.4,1.0,-3.3);
+B(.02,1,2.4,M(0xc9a66b,.9),-7.97,1.75,-3.5);
+for(let i=0;i<10;i++){const z=-4.55+i*.24,l=.2+(i%3)*.07;B(.015,l,.03,chr,-7.94,2.1-l/2,z);B(.015,.05,.07,chr,-7.94,2.1-l,z)}
+B(.7,1,1,M(0xb02222,.5,.4),-7.55,.5,-1.2);B(.76,.04,1.06,stl,-7.55,1.02,-1.2);
+[.25,.5,.75].forEach(y=>{B(.01,.02,.9,0x500000,-7.19,y+.12,-1.2);B(.02,.03,.5,chr,-7.18,y,-1.2)});
+wall(-7.55,-3.5,.8,2.4);wall(-7.55,-1.2,.8,1.1);
+
+[7.15,7.85].forEach(x=>[-4.9,-1.1].forEach(z=>B(.06,2.4,.06,M(0x2a5db0,.5,.4),x,1.2,z)));
+[.25,1.05,1.85].forEach(y=>B(.8,.04,3.9,M(0xe0861a,.5,.3),7.5,y,-3));
+wall(7.5,-3,.9,4);
+
+const trG=new THREE.BoxGeometry(.024,.046,.2),trM=M(0x0e0e0f,.98),SPS=[[0xd4d8dd,.22,1],[0x3b3f45,.3,.9],[0xb89458,.2,.95]];
+const hole=(g,a)=>{const x=Math.cos(a)*.1,y=Math.sin(a)*.1;C(.028,.028,.006,DK,x,y,.117,g,12).rotation.x=PI/2;mk(new THREE.TorusGeometry(.03,.006,6,14),chr,x,y,.119,g)};
+const wheel=(flat,sty=0)=>{const g=new THREE.Group(),sq=SPS[sty%3],rm=M(...sq),ds=M(sq[0],sq[1],sq[2],1),t=mk(new THREE.TorusGeometry(.265,.075,12,32),tireM,0,0,0,g),tg=G(0,0,0,g);
+ t.scale.z=1.7;if(flat){t.scale.y=.82;t.position.y=-.05;tg.scale.y=.82;tg.position.y=-.05}
+ const n=32,im=new THREE.InstancedMesh(trG,trM,n),d=new THREE.Object3D();for(let i=0;i<n;i++){const a=i/n*PI*2;d.position.set(Math.cos(a)*.338,Math.sin(a)*.338,0);d.rotation.set(0,0,a);d.scale.set(1,1,i&1?.8:1);d.updateMatrix();im.setMatrixAt(i,d.matrix)}
+ im.castShadow=im.receiveShadow=true;im.frustumCulled=false;tg.add(im);
+ mk(new THREE.TorusGeometry(.275,.006,6,36),M(0x8a8a8a,.8),0,0,.124,g);
+ mk(new THREE.CylinderGeometry(.2,.2,.2,32,1,true),ds,0,0,0,g).rotation.x=PI/2;
+ [.098,-.098].forEach(z=>mk(new THREE.TorusGeometry(.2,.014,8,32),rm,0,0,z,g));
+ C(.12,.12,.02,rm,0,0,.105,g,28).rotation.x=PI/2;C(.045,.045,.03,M(0x555a60,.4,.8),0,0,.118,g,16).rotation.x=PI/2;
+ if(sty%3==0)for(let i=0;i<5;i++){const q=G(0,0,0,g);q.rotation.z=i*PI*.4;B(.07,.13,.022,rm,0,.14,.103,q)}
+ else if(sty%3==1){for(let i=0;i<10;i++){const q=G(0,0,0,g);q.rotation.z=i*PI*.2;B(.024,.13,.014,rm,0,.14,.1+(i&1)*.008,q)}mk(new THREE.TorusGeometry(.15,.007,6,32),rm,0,0,.105,g)}
+ else{for(let i=0;i<6;i++){const q=G(0,0,0,g);q.rotation.z=i*PI/3;[-.022,.022].forEach(x=>B(.028,.13,.02,rm,x,.14,.103,q))}mk(new THREE.TorusGeometry(.205,.02,8,32),M(0xe6e6e6,.12,1),0,0,.1,g)}
+ for(let i=0;i<4;i++)hole(g,PI/4+i*PI/2);
+ return g};
+const build={
+ can(){const g=new THREE.Group();B(.3,.34,.2,M(0xe8b020,.5),0,.17,0,g);B(.304,.17,.204,M(0xf2f2ee,.7),0,.16,0,g);B(.306,.035,.206,M(0xc0201c,.6),0,.2,0,g);C(.03,.03,.05,M(0x111113),.09,.365,0,g,10);B(.15,.03,.04,M(0x333336),-.05,.41,0,g);B(.03,.06,.04,M(0x333336),-.1,.37,0,g);B(.03,.06,.04,M(0x333336),0,.37,0,g);return g},
+ bat(){const g=new THREE.Group();B(.28,.2,.18,M(0x1d1f23,.6),0,.1,0,g);B(.286,.04,.186,M(0x2b5cab,.5),0,.18,0,g);B(.2,.005,.12,M(0xe0e0e0),0,.205,0,g);C(.022,.022,.03,M(0xc62828),-.09,.215,.05,g,8);C(.022,.022,.03,M(0x222222),.09,.215,.05,g,8);B(.2,.02,.03,M(0x111113),0,.215,-.06,g);return g},
+ wheel:f=>wheel(f,heldStyle),plugs:()=>crate(0xe86a10,0),oldplugs:()=>crate(0x4a3a2a,1),pist:()=>crate2(0x2b5cab,0),oldpist:()=>crate2(0x3a2d22,1),eng:()=>engModel()};
+for(let i=0;i<6;i++){const w=wheel(false,i);w.rotation.y=-PI/2;w.position.set(7.5,.61,-4.55+i*.62);world.add(w);tag(w,{t:'pick',k:'wheel',n:'новое колесо',st:i%3});glow(w,new THREE.CylinderGeometry(.38,.38,.3,20),0,0,0,'rack').rotation.x=PI/2}
+for(let i=0;i<8;i++){const c=build.can();c.position.set(7.5,1.07,-4.7+i*.46);world.add(c);tag(c,{t:'pick',k:'can',n:'канистра масла'});const b=build.bat();b.position.set(7.5,1.87,-4.7+i*.46);world.add(b);tag(b,{t:'pick',k:'bat',n:'аккумулятор'})}
+[0,1,2].forEach(i=>{const t=mk(new THREE.TorusGeometry(.265,.075,12,28),M(0x141414,.95),-7.1,.13+i*.255,5.7);t.rotation.x=PI/2;t.scale.z=1.7});
+[[-7.2,4.5,0x2f5fa8],[-6.4,5.9,0xa83232]].forEach(([x,z,c])=>{C(.3,.3,.9,M(c,.5,.4),x,.45,z,world,20);[.2,.7].forEach(y=>C(.31,.31,.04,M(c,.4,.5),x,y,z,world,20));wall(x,z,.7,.7)});
+wall(-7.1,5.7,.9,.9);
+C(.08,.08,.45,M(0xc62828,.4),7.88,.75,3.2);C(.03,.03,.08,DK,7.88,1.02,3.2);B(.04,.04,.14,chr,7.84,1.08,3.2);
+
+const bin=G(-4.8,0,.2),bc=M(0x2f6b3a,.6,.2);
+B(1,.05,1,bc,0,.03,0,bin);[-.475,.475].forEach(v=>{B(1,.7,.05,bc,0,.38,v,bin);B(.05,.7,1,bc,v,.38,0,bin)});B(1.04,.04,.08,M(0xe3b21e,.6),0,.74,.5,bin);
+const binTire=mk(new THREE.TorusGeometry(.265,.075,10,24),M(0x141414,.95),0,.2,0,bin);binTire.rotation.x=PI/2;binTire.scale.z=1.7;binTire.visible=false;
+tag(bin,{t:'bin',n:'Контейнер для отходов'});glow(bin,new THREE.BoxGeometry(1.1,.85,1.1),0,.42,0,'bin');wall(-4.8,.2,1,1);
+
+B(.5,.9,.4,stl,4.6,.45,4.4);B(.56,.36,.08,M(0x0f1114),4.6,1.12,4.42);
+const sc=cnv(256,160,()=>{}),sx=sc.getContext('2d'),sct=new THREE.CanvasTexture(sc);sct.encoding=THREE.sRGBEncoding;
+const scr=new THREE.Mesh(new THREE.PlaneGeometry(.5,.31),new THREE.MeshBasicMaterial({map:sct}));scr.position.set(4.6,1.12,4.465);world.add(scr);
+const sbt=C(.07,.07,.05,new THREE.MeshStandardMaterial({color:0x1fa34a,emissive:0x0a5a20,roughness:.4}),4.6,.72,4.62,world,20);sbt.rotation.x=PI/2;hp(sbt,.15);tag(sbt,{t:'submit',n:'Сдать работу'});
+glow(world,new THREE.SphereGeometry(.13,12,8),4.6,.72,4.64,'submit',GN);wall(4.6,4.4,.7,.6);
+function drawScr(){sx.fillStyle='#0c1f14';sx.fillRect(0,0,256,160);sx.textAlign='center';sx.fillStyle='#7dff6b';sx.font='bold 20px sans-serif';sx.fillText('ЗАКАЗ №'+O.no,128,30);sx.fillStyle='#fff';sx.font='15px sans-serif';sx.fillText(O.n,128,60);sx.fillText('Оплата: $'+O.pay,128,86);const dn_=cur>=O.s.length,rd=sk()=='submit';sx.fillStyle=dn_?'#7dff6b':rd?'#ffe14a':'#9aa';sx.font='bold 17px sans-serif';sx.fillText(dn_?'ВЫПОЛНЕНО':rd?'ГОТОВО К СДАЧЕ':'В РАБОТЕ'+(hintsOn?': '+cur+'/'+(O.s.length-1):''),128,124);sct.needsUpdate=true}
+
+const L=G(),car=G(0,0,0,L),PT=new THREE.MeshPhysicalMaterial({color:0xc0281f,roughness:.38,metalness:.55,clearcoat:1,clearcoatRoughness:.06,envMap:ENV,envMapIntensity:1.25});
+const GL=new THREE.MeshStandardMaterial({color:0x1a222b,roughness:.04,metalness:.6,transparent:true,opacity:.5,envMap:ENV,envMapIntensity:1.5});
+[-1,1].forEach(s=>{B(.5,3.8,.45,M(0xe0661a,.5,.3),s*2.1,1.9,.1);B(.58,.1,.52,stl,s*2.1,3.85,.1);B(.9,.05,.8,stl,s*2.1,.025,.1);B(.6,.35,1.5,M(0x3a424c,.5,.5),s*2.1,.22,.1,L)});
+wall(-2.1,.1,.7,.7);wall(2.1,.1,.7,.7);B(4.7,.15,.3,stl,0,3.88,.1);
+[.75,-.55].forEach(z=>{B(4.2,.08,.18,M(0xf2b705,.5,.3),0,.15,z,L);[-.6,.6].forEach(x=>C(.11,.12,.08,M(0x111113,.9),x,.23,z,L,14))});
+B(.32,.5,.12,M(0x22262b,.6,.3),2.1,1.35,.4);B(.22,.06,.01,YL,2.1,1.25,.47);
+const bm=new THREE.MeshStandardMaterial({color:0x1fa34a,emissive:0x0a5a20,roughness:.4});
+const btn=C(.06,.06,.06,bm,2.1,1.43,.47,world,20);btn.rotation.x=PI/2;{const u={t:'btn',n:'Кнопка подъёмника'};hp(btn,.14);tag(btn,u)}
+glow(world,new THREE.SphereGeometry(.12,12,8),2.1,1.43,.5,'btn',GN);
+
+RX(1.7,.68,3,.06,PT,0,.61,-.6,car);[-1,1].forEach(s=>RX(.2,.68,1.2,.05,PT,s*.75,.61,1.5,car));
+B(1.3,.05,1.2,DK,0,.3,1.5,car);RX(1.7,.3,.1,.04,PT,0,.45,2.05,car);
+B(.78,.34,.03,REFM,0,.78,2.03,car);B(.7,.27,.04,M(0x0d0d0d,.5,.4),0,.78,2.045,car);for(let i=0;i<6;i++)B(.68,.012,.03,chr,0,.68+i*.045,2.07,car);B(.02,.27,.03,chr,0,.78,2.07,car);C(.035,.035,.012,M(0xd4a017,.25,1),0,.78,2.088,car,18).rotation.x=PI/2;
+B(.8,.1,.02,M(0x050506),0,.38,2.125,car);for(let i=0;i<9;i++)B(.01,.1,.025,chr,-.36+i*.09,.38,2.13,car);B(1.5,.03,.2,DK,0,.26,2.12,car);
+const hl=new THREE.MeshStandardMaterial({color:0xffffee,emissive:0xffffcc,emissiveIntensity:.6,roughness:.2}),tl=new THREE.MeshStandardMaterial({color:0xaa0000,emissive:0x660000,roughness:.3});
+RX(1.76,.18,.2,.06,DK,0,.38,2.02,car);RX(1.76,.18,.2,.06,DK,0,.38,-2.02,car);B(.4,.12,.02,M(0xeeeeee),0,.5,-2.11,car);
+[-1,1].forEach(s=>{{const hg=G(s*.62,.78,2.0,car);B(.3,.17,.06,DK,0,0,0,hg);C(.075,.03,.06,REFM,-.06,0,.02,hg,18).rotation.x=PI/2;C(.05,.025,.06,REFM,.075,0,.02,hg,16).rotation.x=PI/2;mk(new THREE.SphereGeometry(.02,8,6),hl,-.06,0,.035,hg);mk(new THREE.SphereGeometry(.015,8,6),hl,.075,0,.035,hg);B(.28,.012,.01,hl,0,.068,.045,hg);B(.3,.17,.03,LENS,0,0,.055,hg).castShadow=false}
+ B(.3,.14,.04,tl,s*.55,.72,-2.1,car);B(.07,.45,.07,PT,s*.72,1.175,.45,car);B(.07,.45,.07,PT,s*.72,1.175,-1.45,car);
+ RX(.42,.12,.46,.04,SEAT,s*.35,1.02,-.2,car);RX(.42,.34,.1,.04,SEAT,s*.35,1.2,-.47,car).rotation.x=-.12;RX(.2,.09,.07,.03,SEAT,s*.35,1.34,-.5,car);
+ B(.2,.03,.04,DK,s*.82,1.04,.42,car);RX(.11,.085,.08,.025,PT,s*.97,1.08,.36,car);B(.095,.07,.008,chr,s*.97,1.08,.316,car);B(.02,.03,.16,chr,s*.86,.8,-.3,car);
+ [.2,-1].forEach(z=>B(.01,.6,.02,DK,s*.855,.61,z,car))});
+const gc=RX(1.4,.45,1.9,.05,GL,0,1.175,-.5,car);gc.castShadow=false;RX(1.5,.07,1.8,.03,PT,0,1.43,-.5,car);RX(1.3,.14,.22,.05,DK,0,1.03,.3,car);
+B(1.38,.02,1.88,M(0x2a2c30,.8),0,1.385,-.5,car);B(1.38,.015,1.88,M(0x15171a,.9),0,.955,-.5,car);
+mk(new THREE.TorusGeometry(.085,.013,8,20),M(0x111113,.7),-.35,1.15,.1,car).rotation.x=-.35;B(.03,.03,.17,DK,-.35,1.085,.14,car).rotation.x=.6;B(.22,.1,.01,SCR,0,1.12,.2,car);B(.26,.05,.1,M(0x0b0b0d),-.35,1.1,.28,car);
+RX(.18,.12,.9,.03,DK,0,1.02,-.25,car);C(.012,.012,.12,chr,0,1.13,-.1,car);mk(new THREE.SphereGeometry(.025,10,8),M(0x111113,.5),0,1.2,-.1,car);
+RX(1.3,.12,.4,.04,SEAT,0,1.02,-1.15,car);RX(1.3,.34,.1,.04,SEAT,0,1.2,-1.38,car);
+C(.04,.04,3.6,M(0x555a60,.5,.7),.3,.23,-.1,car).rotation.x=PI/2;C(.1,.1,.6,M(0x666b70,.5,.7),.3,.22,-1.5,car).rotation.x=PI/2;
+B(1,.18,.6,DK,0,.2,-1,car);B(1.3,.06,.2,DK,0,.22,1.3,car);B(1.9,.05,.05,M(0x555a60,.5,.7),0,.34,1.3,car);B(1.9,.05,.05,M(0x555a60,.5,.7),0,.34,-1.3,car);
+const hood=G(0,.95,.9,car);RX(1.7,.05,1.2,.02,PT,0,.03,.6,hood);B(1.3,.01,.9,M(0x333336),0,0,.6,hood);[-.3,.3].forEach(x=>B(.1,.02,1,PT,x,.07,.6,hood));const scoopB=G(0,0,0,hood),scoopH=G(0,0,0,hood);RX(.5,.07,.42,.03,PT,0,.085,.55,scoopB);B(.38,.04,.01,DK,0,.09,.77,scoopB);RX(.5,.06,.5,.025,PT,0,.075,.6,scoopH);B(.3,.02,.08,DK,0,.105,.84,scoopH);scoopB.visible=scoopH.visible=false;
+const ENN=['V6 3.5 л','V8 5.0 л','2JZ-GTE 3.0 л Twin-Turbo','6.2 л HEMI/LS с нагнетателем','Boxer 2.5 л Turbo','2.0 л VTEC'],CARN=['Седан','Купе','Toyota Supra','Dodge Challenger / Chevrolet Camaro','Subaru WRX STI','Honda Civic Type R'],CARC=[0x8a2020,0x1e2430,0xf0f0f2,0xff7a00,0x1b3f9e,0xd10f1f];
+tag(hood,{t:'hood',n:'Капот'});
+const _Y=new THREE.Vector3(0,1,0),_a=new THREE.Vector3(),_b=new THREE.Vector3(),RB=M(0x141416,.8),PUL=M(0x8d9399,.3,.9);
+const rod=(a,b,r,m,p)=>{const v=new THREE.Vector3(b[0]-a[0],b[1]-a[1],b[2]-a[2]),l=v.length(),o=C(r,r,l,m,(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2,p,8);o.quaternion.setFromUnitVectors(_Y,v.normalize());return o};
+const STR=[-1,1].map(s=>{const lo=C(.024,.024,1,M(0x23262a,.5,.6),0,0,0,car,8),up=C(.013,.013,1,chr,0,0,0,car,8);lo.raycast=up.raycast=()=>{};return{s,lo,up}});
+function struts(){const sn=Math.sin(ha),cs=Math.cos(ha);STR.forEach(({s,lo,up})=>{_a.set(s*.62,.88,1.3);_b.set(s*.62,.91-.9*sn,.9+.9*cs);const v=_b.sub(_a),l=v.length();v.normalize();lo.scale.y=up.scale.y=l*.55;lo.position.copy(_a).addScaledVector(v,l*.275);up.position.copy(_a).addScaledVector(v,l*.725);lo.quaternion.setFromUnitVectors(_Y,v);up.quaternion.copy(lo.quaternion)})}
+let cap,neck,oilS,capZ=0;
+
+const CHM=M(0x8c9298,.3,.9),ALU=M(0xc9ced4,.22,.95),RUST=M(0x6b4a34,.55,.8),BLK=M(0x1c1e22,.45,.6);
+const lbl=(t,w,h,x,y,z,p,bg,fg,rz)=>{const c=cnv(256,Math.max(32,Math.round(256*h/w)),(g,cw,ch)=>{g.fillStyle=bg;g.fillRect(0,0,cw,ch);g.fillStyle=fg;g.font='bold '+Math.round(ch*.62)+'px Arial';g.textAlign='center';g.textBaseline='middle';g.fillText(t,cw/2,ch/2+2)}),tt=new THREE.CanvasTexture(c);tt.encoding=THREE.sRGBEncoding;const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:tt,roughness:.4,metalness:.4}));m.rotation.set(-PI/2,0,rz||0);m.position.set(x,y,z);p.add(m);return m};
+const oilKit=(par,px,pt,z0)=>{const cg=G(px,pt-.525,0,par),nk=C(.042,.048,.05,DK,0,.5,z0,cg,12);hp(nk,.08);tag(nk,{t:'neck',n:'Маслозаливная горловина'});
+ const cp_=C(.06,.06,.025,M(0xf2c400,.5),0,.525,z0,cg,14);B(.07,.012,.016,DK,0,.017,0,cp_);hp(cp_,.1);tag(cp_,{t:'cap',n:'Крышка'});
+ glow(cp_,new THREE.SphereGeometry(.1,10,8),0,0,0,'cap');glow(cg,new THREE.SphereGeometry(.09,10,8),0,.5,z0,'neck');
+ const os=C(.012,.012,.3,M(0xe0a000,.2),0,.69,z0,cg,6);os.visible=false;os.raycast=()=>{};return{neck:nk,cap:cp_,oilS:os,cz0:z0}};
+const dipKit=(par,x,ry,z)=>{const dg=G(x,ry-.44,z,par),dh=mk(new THREE.TorusGeometry(.022,.007,6,12),M(0xff7a00,.5,.2),0,.44,0,dg);C(.011,.011,.36,M(0xb5bbc2,.3,.9),0,.25,0,dg,8);dh.rotation.y=PI/2;hp(dh,.07);tag(dg,{t:'dip',n:'Щуп уровня масла'})};
+const beltKit=(par,zf,PS,cv)=>{const bg=G(0,0,0,par);if(cv)B(cv[2],cv[3],.04,cast(0x5b6068,.5,.8),cv[0],cv[1],zf-.045,bg);
+ PS.forEach(([x,y,rr])=>{C(rr,rr,.03,PUL,x,y,zf,bg,20).rotation.x=PI/2;C(.018,.018,.04,CHM,x,y,zf+.01,bg,8).rotation.x=PI/2;C(rr*.8,rr*.8,.012,M(0x2a2d31,.5,.6),x,y,zf+.02,bg,20).rotation.x=PI/2});
+ PS.forEach((p,i)=>{const q=PS[(i+1)%PS.length],dx=q[0]-p[0],dy=q[1]-p[1];B(Math.hypot(dx,dy),.012,.04,RB,(p[0]+q[0])/2,(p[1]+q[1])/2,zf,bg).rotation.z=Math.atan2(dy,dx)});
+ tag(bg,{t:'info',n:'Ремень привода и шкивы'});return bg};
+const turboKit=(par,x,y,z)=>{const g=G(x,y,z,par);mk(new THREE.SphereGeometry(.06,14,10),RUST,0,0,0,g);C(.03,.03,.1,CHM,0,0,.06,g,12).rotation.x=PI/2;mk(new THREE.SphereGeometry(.065,14,10),ALU,0,0,.13,g);C(.04,.03,.07,ALU,0,0,.2,g,14).rotation.x=PI/2;C(.075,.075,.012,CHM,0,0,.09,g,16).rotation.x=PI/2;tag(g,{t:'info',n:'Турбокомпрессор'});return g};
+const gearKit=(par,x,y,z,r)=>{const gm=M(0xb7bcc3,.3,.9);C(r,r,.03,gm,x,y,z,par,24).rotation.x=PI/2;for(let i=0;i<14;i++){const a=i/14*PI*2;B(.016,.016,.03,gm,x+Math.cos(a)*r,y+Math.sin(a)*r,z,par).rotation.z=a}C(r*.4,r*.4,.04,CHM,x,y,z+.012,par,12).rotation.x=PI/2};
+const mountsKit=(par,cy,len,hw)=>{const rm=M(0x111113,.9),mm=M(0x6a7077,.5,.8),bm_=cast(0x8d939a,.5,.85);[-1,1].forEach(q=>[-.3,.3].forEach(zz=>{const z=zz*len*.9,x=q*(hw+.09);B(.1,.07,.1,bm_,q*(hw+.03),cy-.11,z,par);B(.14,.035,.12,mm,x,cy-.16,z,par);C(.035,.035,.06,rm,x,cy-.2,z,par,12);B(.12,.025,.1,mm,x,cy-.24,z,par);const h=Math.max(.01,cy-.24-.32);B(.07,h,.07,mm,x,.32+h/2,z,par)}));[-.25,.25].forEach(zz=>B(1.0,.04,.1,M(0x44484e,.6,.5),0,.325,zz*len*.9,par))};
+const engTag=(eg,nm)=>{eg.traverse(m=>{if(!m.isMesh)return;const u=m.userData;if(!u.t)m.userData={t:'eng',n:nm};else if(u.t=='info')u.t='eng'})};
+const fnE=(eg,nm,o)=>{engTag(eg,nm);return Object.assign({g:eg},o)};
+function eng2jz(){const eg=G(0,0,0,car),pg=G(0,0,1.3,eg),n=6,sp=.115,len=n*sp+.06,cy=.52,zf=len/2+.05,zs=i=>(i-(n-1)/2)*sp,bk=cast(0x8d939a,.5,.85),al=cast(0xc3c8ce,.35,.95);
+ B(.25,.05,len-.04,M(0x3a3d42,.5,.8),0,cy-.17,0,pg);B(.26,.22,len,bk,0,cy-.04,0,pg);for(let i=0;i<=n;i++)[-1,1].forEach(q=>B(.016,.15,.014,bk,q*.135,cy-.04,(i-n/2)*sp,pg));
+ B(.25,.09,len+.01,al,0,cy+.12,0,pg);B(.22,.04,len-.03,BLK,0,cy+.185,0,pg);[-.075,.075].forEach(x=>{B(.07,.05,len-.06,BLK,x,cy+.225,0,pg);B(.074,.006,len-.1,CHM,x,cy+.252,0,pg)});
+ lbl('2JZ-GTE',len-.2,.07,0,cy+.2075,0,pg,'#111','#e8e8ec',PI/2);
+ const oil=oilKit(pg,.075,cy+.285,len/2-.09);dipKit(pg,-.15,cy+.17,-len*.32);
+ const t1=-.2,t2=.14,ty=cy+.06,tx_=-.27;turboKit(pg,tx_,ty,t1);turboKit(pg,tx_,ty,t2);
+ const mf=G(0,0,0,pg);for(let i=0;i<n;i++)rod([-.125,cy+.12,zs(i)],[tx_+.02,ty,i<3?t1:t2],.02,RUST,mf);[t1,t2].forEach(z=>rod([tx_,ty-.04,z],[tx_+.05,cy-.22,z-.12],.04,RUST,mf));tag(mf,{t:'info',n:'Выпускной коллектор'});
+ const ip=G(0,0,0,pg);B(.1,.09,len*.8,al,.19,cy+.215,0,ip);for(let i=0;i<n;i++)rod([.19,cy+.17,zs(i)],[.115,cy+.12,zs(i)],.02,al,ip);C(.05,.05,.09,CHM,.19,cy+.22,-len*.4-.06,ip,18).rotation.x=PI/2;tag(ip,{t:'info',n:'Впускной коллектор'});
+ const pp=G(0,0,0,pg),JT=[-.2,cy+.34,-.02];rod([tx_,ty+.05,t1+.13],JT,.034,ALU,pp);rod([tx_,ty+.05,t2+.13],JT,.034,ALU,pp);rod(JT,[.19,cy+.3,-len*.4-.1],.036,ALU,pp);mk(new THREE.SphereGeometry(.045,12,8),ALU,JT[0],JT[1],JT[2],pp);
+ rod([tx_,ty,t1+.235],[-.36,ty,t1+.3],.025,ALU,pp);rod([-.36,ty,t1+.3],[-.36,ty,.42],.025,ALU,pp);rod([tx_,ty,t2+.235],[-.36,ty,.4],.025,ALU,pp);tag(pp,{t:'info',n:'Алюминиевый пайпинг'});
+ const pod=G(0,0,0,pg);C(.085,.05,.12,M(0xd0102a,.6,.2),-.36,ty,.5,pod,20).rotation.x=PI/2;for(let i=0;i<4;i++)C(.087,.087,.006,CHM,-.36,ty,.46+i*.025,pod,20).rotation.x=PI/2;C(.085,.085,.012,CHM,-.36,ty,.56,pod,20).rotation.x=PI/2;tag(pod,{t:'info',n:'Фильтр нулевого сопротивления'});
+ beltKit(pg,zf,[[0,cy-.04,.085],[.17,cy+.12,.05],[-.12,cy+.13,.045],[.1,cy-.1,.035]],[0,cy+.04,.3,.36]);mountsKit(pg,cy,len,.13);
+ return fnE(eg,'Двигатель 2JZ-GTE 3.0 л Twin-Turbo (Toyota Supra)',oil)}
+function engBox(){const eg=G(0,0,0,car),pg=G(0,0,1.3,eg),cy=.52,len=.46,zf=len/2+.05,bk=cast(0x8d939a,.5,.85),al=cast(0xc3c8ce,.35,.95),cvm=M(0x1f4fb4,.4,.5),zc=[-.11,.11];
+ B(.3,.24,len,bk,0,cy-.04,0,pg);B(.28,.05,len-.04,M(0x3a3d42,.5,.8),0,cy-.17,0,pg);
+ [-1,1].forEach(q=>{zc.forEach(z=>C(.065,.065,.14,bk,q*.2,cy,z,pg,18).rotation.z=PI/2);B(.17,.21,len-.02,al,q*.31,cy,0,pg);B(.04,.18,len-.04,cvm,q*.405,cy,0,pg);for(let i=0;i<7;i++)B(.014,.15,.012,CHM,q*.428,cy,(i-3)*.055,pg)});
+ const mf=G(0,0,0,pg);zc.forEach(z=>{rod([-.31,cy-.08,z],[-.33,cy-.14,.22],.022,RUST,mf);rod([.31,cy-.08,z],[.36,cy-.14,-.3],.026,RUST,mf)});tag(mf,{t:'info',n:'Выпускной коллектор'});
+ const im=G(0,0,0,pg);B(.3,.1,.32,al,0,cy+.12,0,im);zc.forEach(z=>[-1,1].forEach(q=>rod([q*.15,cy+.12,z],[q*.24,cy+.05,z],.03,al,im)));C(.045,.045,.09,CHM,0,cy+.12,-.23,im,16).rotation.x=PI/2;tag(im,{t:'info',n:'Впускной коллектор'});
+ const ic=G(0,0,0,pg);B(.5,.07,.44,M(0x24282d,.55,.6),0,cy+.24,0,ic);for(let i=0;i<14;i++)B(.5,.014,.018,CHM,0,cy+.277,(i-6.5)*.03,ic);[-1,1].forEach(q=>B(.05,.075,.44,al,q*.275,cy+.24,0,ic));B(.06,.04,.06,al,0,cy+.19,0,ic);tag(ic,{t:'info',n:'Интеркулер верхнего расположения'});
+ turboKit(pg,-.33,cy-.14,.22);
+ const pp=G(0,0,0,pg);rod([-.33,cy-.1,.35],[-.3,cy+.1,.3],.03,ALU,pp);rod([-.3,cy+.1,.3],[-.28,cy+.24,.2],.03,ALU,pp);rod([.275,cy+.24,-.2],[.04,cy+.14,-.23],.035,ALU,pp);tag(pp,{t:'info',n:'Пайпинг интеркулера'});
+ const pod=G(0,0,0,pg);C(.085,.05,.1,M(0x1f4fb4,.6,.2),-.33,cy-.14,.5,pod,20).rotation.x=PI/2;C(.085,.085,.012,CHM,-.33,cy-.14,.555,pod,20).rotation.x=PI/2;rod([-.33,cy-.14,.455],[-.33,cy-.14,.46],.04,ALU,pod);tag(pod,{t:'info',n:'Воздушный фильтр'});
+ const oil=oilKit(pg,.35,cy+.135,.1);dipKit(pg,.2,cy+.14,-.2);
+ beltKit(pg,zf,[[0,cy-.04,.085],[.2,cy+.07,.05],[-.2,cy+.06,.05],[0,cy+.15,.04]],[0,cy+.03,.5,.36]);mountsKit(pg,cy,len,.15);
+ return fnE(eg,'Двигатель Boxer EJ25 2.5 л Turbo (Subaru WRX STI)',oil)}
+function engK20(){const eg=G(0,0,0,car),pg=G(0,0,1.3,eg),ek=G(0,0,0,pg);ek.rotation.y=PI/2;const n=4,sp=.12,len=n*sp+.06,cy=.52,zf=len/2+.05,zs=i=>(i-(n-1)/2)*sp,bk=cast(0x8d939a,.5,.85),al=cast(0xc3c8ce,.35,.95),red=M(0xc40d0d,.45,.3);
+ B(.24,.05,len-.04,M(0x3a3d42,.5,.8),0,cy-.17,0,ek);B(.25,.22,len,bk,0,cy-.04,0,ek);for(let i=0;i<=n;i++)[-1,1].forEach(q=>B(.016,.15,.014,bk,q*.13,cy-.04,(i-n/2)*sp,ek));
+ B(.24,.09,len+.01,al,0,cy+.12,0,ek);RX(.2,.07,len-.03,.02,red,0,cy+.205,0,ek);[-.09,.09].forEach(x=>B(.02,.015,len-.08,M(0x8a0a0a,.4,.3),x,cy+.245,0,ek));
+ lbl('i-VTEC',.14,.06,0,cy+.2415,0,ek,'#f2f2f2','#c40d0d');for(let i=0;i<n;i++)C(.016,.016,.02,DK,.0,cy+.25,zs(i)-(i<2?.11:-.11)*0,ek,8);
+ const oil=oilKit(ek,.07,cy+.27,len/2-.07);dipKit(ek,-.14,cy+.16,.22);
+ const ip=G(0,0,0,ek);B(.1,.09,len*.7,ALU,.18,cy+.2,0,ip);for(let i=0;i<n;i++)rod([.18,cy+.16,zs(i)],[.11,cy+.12,zs(i)],.02,ALU,ip);C(.05,.05,.09,CHM,.18,cy+.2,len*.35+.06,ip,18).rotation.x=PI/2;rod([.18,cy+.2,len*.35+.1],[.26,cy+.16,.42],.045,DK,ip);B(.3,.17,.2,M(0x1f2226,.6),.28,cy+.1,.52,ip);B(.31,.03,.21,M(0x2d3238,.6),.28,cy+.195,.52,ip);tag(ip,{t:'info',n:'Впускной коллектор и воздушный фильтр'});
+ const mf=G(0,0,0,ek);for(let i=0;i<n;i++)C(.022,.022,.1,RUST,-.17,cy+.1,zs(i),mf,10).rotation.z=PI/2;B(.06,.06,len*.8,RUST,-.21,cy+.1,0,mf);rod([-.21,cy+.1,-.2],[-.2,cy-.25,-.28],.04,RUST,mf);tag(mf,{t:'info',n:'Выпускной коллектор'});
+ const tm=G(0,0,0,ek),cr=[0,cy-.04],c1=[-.065,cy+.19],c2=[.065,cy+.19],cm_=M(0x2a2d31,.5,.6);B(.3,.3,.03,cast(0x5b6068,.5,.8),0,cy+.07,zf-.03,tm);
+ gearKit(tm,cr[0],cr[1],zf,.045);gearKit(tm,c1[0],c1[1],zf,.042);gearKit(tm,c2[0],c2[1],zf,.042);
+ [[cr,c1],[c1,c2],[c2,cr]].forEach(([a,b])=>rod([a[0],a[1],zf],[b[0],b[1],zf],.008,cm_,tm));C(.014,.014,.04,CHM,.075,cy+.07,zf,tm,8).rotation.x=PI/2;tag(tm,{t:'info',n:'Открытый привод ГРМ (цепь и звёздочки)'});
+ beltKit(ek,zf+.045,[[0,cy-.04,.07],[.14,cy+.02,.05],[-.12,cy-.02,.045]],null);mountsKit(ek,cy,len,.13);
+ return fnE(eg,'Двигатель Honda K20 i-VTEC 2.0 л (Civic Type R)',oil)}
+function eng(v8,sc){
+ const n=v8?4:3,a=v8?.785:.52,len=n*.17+.06,cz=1.3,cy=(v8?.5:.46)+(v8?.05:.04),eg=G(0,0,0,car),bk=cast(0x8d939a,.5,.85),hd=cast(0xc3c8ce,.35,.95),cm=sc?M(0xe6e9ed,.06,1):M(v8?0xa81818:0x1c1e22,.4,.65),ex=M(0x6b4a34,.55,.8),pl=M(0x2a2d33,.4,.75),chm=M(0x8c9298,.3,.9),zf=cz+len/2+.05,r={g:eg};
+ B(.5,.12,len,bk,0,cy-.1,cz,eg);B(.46,.04,len-.05,M(0x3a3d42,.5,.8),0,cy-.17,cz,eg);B(.3,.22,len,bk,0,cy+.02,cz,eg);
+ [-1,1].forEach(s=>{const b=G(0,cy,cz,eg);b.rotation.z=-s*a;
+  B(.22,.3,len,bk,0,.2,0,b);B(.21,.09,len+.02,hd,0,.39,0,b);B(.17,.06,len-.04,cm,0,.46,0,b);B(.06,.14,len*.7,ex,s*.16,.2,0,b);
+  {const rb=sc?cm:M(v8?0xc23030:0x34373d,.35,.7),nr=Math.floor((len-.1)/.045);
+   [-.085,.085].forEach(x=>B(.014,.035,len-.04,rb,x,.49,0,b));B(.17,.035,.014,rb,0,.49,len/2-.03,b);B(.17,.035,.014,rb,0,.49,-len/2+.03,b);
+   for(let i=0;i<nr;i++){const z=(i-(nr-1)/2)*.045;if(s==1&&Math.abs(z-(len/2-.12))<.055)continue;B(.15,.018,.015,rb,0,.495,z,b)}
+   B(.012,.02,len-.12,rb,0,.495,0,b);
+   const xm=M(0x4a3a30,.75,.6),hsh=M(0x9aa0a6,.35,.9);
+   B(.07,.07,len*.9,xm,s*.25,.17,0,b);
+   for(let i=0;i<n;i++){const z=(i-(n-1)/2)*.17;C(.03,.03,.11,xm,s*.19,.2,z,b,10).rotation.z=PI/2;B(.1,.04,.05,xm,s*.2,.18,z,b)}
+   B(.012,.15,len*.85,hsh,s*.295,.17,0,b);
+   rod([s*.25,.16,-len*.42],[s*.3,-.12,-len*.46],.032,xm,b);rod([s*.3,-.12,-len*.46],[s*.2,-.3,-len*.4],.032,xm,b)}
+  for(let i=0;i<n;i++){const z=(i-(n-1)/2)*.17;C(.024,.024,.06,M(0x15161a,.5,.3),0,.475,z,b,10);C(.015,.015,.02,chm,0,.51,z,b,8);C(.035,.035,.08,ex,s*.14,.24,z,b,8).rotation.z=PI/2}
+  if(s==1){const z0=len/2-.12;r.cz0=z0;
+   const nk=C(.042,.048,.05,DK,0,.5,z0,b,12);hp(nk,.08);tag(nk,{t:'neck',n:'Маслозаливная горловина'});
+   const cp_=C(.06,.06,.025,M(0xf2c400,.5),0,.525,z0,b,14);B(.07,.012,.016,DK,0,.017,0,cp_);hp(cp_,.1);tag(cp_,{t:'cap',n:'Крышка'});
+   glow(cp_,new THREE.SphereGeometry(.1,10,8),0,0,0,'cap');glow(b,new THREE.SphereGeometry(.09,10,8),0,.5,z0,'neck');
+   const os=C(.012,.012,.3,M(0xe0a000,.2),-.16*Math.sin(a),.525+.16*Math.cos(a),z0,b,6);os.rotation.z=a;os.visible=false;os.raycast=()=>{};
+   Object.assign(r,{neck:nk,cap:cp_,oilS:os})}
+  else{const dg=G(-.155,0,len/2-.045,b),dh=mk(new THREE.TorusGeometry(.022,.007,6,12),M(0xff7a00,.5,.2),0,.44,0,dg);C(.011,.011,.36,M(0xb5bbc2,.3,.9),0,.25,0,dg,8);dh.rotation.y=PI/2;hp(dh,.07);tag(dg,{t:'dip',n:'Щуп уровня масла'})}
+ });
+if(sc){const cgy=cy+.22,sca=cast(0xcfd4da,.3,.95),zc2=cz-.04,ch=G(0,0,0,eg);
+  RX(.3,.15,.46,.03,sca,0,cgy,zc2,ch);[-.075,.075].forEach(x=>{C(.07,.07,.44,sca,x,cgy+.03,zc2,ch,20).rotation.x=PI/2;for(let i=0;i<12;i++)B(.06,.012,.02,sca,x,cgy+.1,zc2-.2+i*.036,ch)});
+  [-1,1].forEach(q=>{for(let i=0;i<9;i++)B(.012,.1,.03,sca,q*.156,cgy,zc2-.18+i*.045,ch)});
+  C(.06,.06,.1,sca,0,cgy,zc2+.28,ch,18).rotation.x=PI/2;C(.02,.02,.14,chm,0,cgy,zc2+.385,ch,10).rotation.x=PI/2;
+  C(.06,.06,.1,chm,0,cgy,zc2-.28,ch,18).rotation.x=PI/2;C(.065,.065,.012,PUL,0,cgy,zc2-.335,ch,18).rotation.x=PI/2;C(.03,.03,.07,M(0x2a4fb0,.4),.15,cgy+.1,zc2-.1,ch,12);
+  rod([0,cgy,cz-.38],[.46,cy+.14,cz-.28],.05,DK,ch);B(.2,.17,.3,M(0x1f2226,.6),.56,cy+.13,cz-.226,ch);B(.21,.03,.31,M(0x2d3238,.6),.56,cy+.215,cz-.226,ch);
+  tag(ch,{t:'info',n:'Механический нагнетатель (компрессор)'})}else{ const py=cy+.27,ig=G(0,0,0,eg),pm=M(0x2a2d33,.4,.75),pL=len*.8,rz=cz-pL/2;
+ B(.3,.09,pL,pm,0,py,cz,ig);B(.24,.03,pL-.06,M(0x34383f,.4,.8),0,py+.06,cz,ig);B(.34,.03,pL,M(0x3a3e45,.4,.8),0,py-.04,cz,ig);
+ for(let i=0;i<Math.floor(pL/.05);i++)B(.26,.016,.014,pm,0,py+.08,(i-(Math.floor(pL/.05)-1)/2)*.05+cz,ig);
+ [-1,1].forEach(q=>B(.03,.1,pL-.04,M(0x3a3e45,.4,.8),q*.16,py,cz,ig));
+ for(let i=0;i<n;i++)[-1,1].forEach(q=>{const z=cz+(i-(n-1)/2)*.17,r_=rod([q*.12,py-.01,z],[q*.2,py-.1,z],.034,pm,ig);B(.06,.04,.075,pm,q*.225,py-.11,z,ig)});
+ B(.1,.05,.08,M(0x5a5f66,.4,.85),0,py-.06,cz-pL*.1,ig);
+ const tb=C(.05,.05,.1,chm,0,py+.005,rz-.07,ig,18);tb.rotation.x=PI/2;C(.056,.056,.02,chm,0,py+.005,rz-.015,ig,18).rotation.x=PI/2;C(.044,.044,.006,DK,0,py+.005,rz-.125,ig,16).rotation.x=PI/2;
+ B(.036,.03,.036,DK,.065,py+.03,rz-.07,ig);C(.012,.012,.1,chm,0,py+.005,rz-.07,ig,8).rotation.z=PI/2;
+ rod([0,py+.005,rz-.12],[.1,py-.02,rz-.13],.042,DK,ig);rod([.1,py-.02,rz-.13],[.5,py-.13,rz-.06],.045,DK,ig);
+ [.18,.3,.42].forEach(t=>C(.05,.05,.012,M(0x2a2a2d,.6),t,py-.02-(t-.1)*.2,rz-.13+(t-.1)*.2,ig,12).rotation.z=PI/2);
+ tag(ig,{t:'info',n:'Впускной коллектор и дроссельная заслонка'});
+ const ab=G(.56,0,0,eg);B(.2,.17,.3,M(0x1f2226,.6),0,py-.14,rz+.07,ab);B(.21,.03,.31,M(0x2d3238,.6),0,py-.045,rz+.07,ab);[-.07,.07].forEach(x=>B(.02,.02,.3,M(0x15161a,.6),x,py-.025,rz+.07,ab));
+ B(.03,.1,.05,M(0x15161a,.6),0,py-.14,rz-.1,ab);tag(ab,{t:'info',n:'Воздушный фильтр и патрубок'});
+}
+ // опоры двигателя (подушки)
+ {const rm=M(0x111113,.9),mm=M(0x6a7077,.5,.8),yb=cy-.2;
+  [.5,.5].length;
+  [-1,1].forEach(q=>[-.3,.3].forEach(zz=>{const z=cz+zz*len*.9;
+   B(.1,.07,.1,bk,q*.28,cy-.11,z,eg);B(.14,.035,.12,mm,q*.34,cy-.16,z,eg);C(.035,.035,.06,rm,q*.34,cy-.2,z,eg,12);B(.12,.025,.1,mm,q*.34,cy-.24,z,eg);
+   const h=Math.max(.01,cy-.24-.32);B(.07,h,.07,mm,q*.34,.32+h/2,z,eg)}));
+  [-.25,.25].forEach(zz=>B(1.0,.04,.1,M(0x44484e,.6,.5),0,.325,cz+zz*len*.9,eg));
+  C(.03,.03,.5,rm,0,cy-.3,cz-len/2-.02,eg,10).rotation.z=PI/2;
+  tag(eg.children[eg.children.length-1],{t:'info',n:'Подушка двигателя'})}
+ {const fcm=M(0x4a4e55,.5,.7);B(.46,.44,.045,fcm,0,cy+.07,zf-.055,eg);B(.36,.36,.03,M(0x5b6068,.45,.75),0,cy+.07,zf-.03,eg);
+  for(let i=0;i<14;i++){const a=i/14*PI*2;C(.012,.012,.012,chm,Math.cos(a)*.2,cy+.07+Math.sin(a)*.2,zf-.025,eg,6).rotation.x=PI/2}
+  C(.06,.06,.05,M(0x7a7f86,.4,.85),-.26,cy+.12,zf-.04,eg,16).rotation.x=PI/2;C(.1,.1,.03,M(0x3a3d42,.4,.8),0,cy+.07,zf-.04,eg,20).rotation.x=PI/2}
+
+ const PS=sc?[[0,cy,.09],[.27,cy+.2,.055],[0,cy+.22,.08],[-.26,cy+.12,.06]]:[[0,cy,.09],[.27,cy+.2,.055],[0,cy+.37,.045],[-.26,cy+.12,.06],[.12,cy+.17,.032]],bg=G(0,0,0,eg);
+ PS.forEach(([x,y,rr])=>{C(rr,rr,.03,PUL,x,y,zf,bg,20).rotation.x=PI/2;C(.018,.018,.04,chm,x,y,zf+.01,bg,8).rotation.x=PI/2});
+ C(.097,.097,.012,M(0x2a2d31,.5,.6),0,cy,zf+.02,bg,24).rotation.x=PI/2;
+ C(.07,.07,.1,M(0x5a5f66,.4,.85),.27,cy+.2,zf-.06,bg,16).rotation.x=PI/2;C(.06,.06,.1,M(0x7a7f86,.4,.85),-.26,cy+.12,zf-.06,bg,16).rotation.x=PI/2;
+ PS.forEach((p,i)=>{const q=PS[(i+1)%PS.length],dx=q[0]-p[0],dy=q[1]-p[1];B(Math.hypot(dx,dy),.012,.04,RB,(p[0]+q[0])/2,(p[1]+q[1])/2,zf-.005,bg).rotation.z=Math.atan2(dy,dx)});
+ tag(bg,{t:'info',n:'Ремень привода и шкивы'});
+ engTag(eg,sc?'Двигатель 6.2 л HEMI/LS V8 с нагнетателем':v8?'Двигатель V8 5.0 л':'Двигатель V6 3.5 л');
+ return r}
+let pk=0,engOut=0,onStand=0,hdOff=0,shp=0,dmp={};
+const PGG=G(0,0,0,car),PGL=[],a1=.52,a2=.785,PP=[[[-.244,.925,1.13,a1],[-.244,.925,1.3,a1],[.244,.925,1.13,-a1],[.244,.925,1.3,-a1]],[[-.347,.897,1.215,a2],[-.347,.897,1.385,a2],[.347,.897,1.215,-a2],[.347,.897,1.385,-a2]],[-.1725,-.0575,.0575,.1725].map(z=>[-.075,.772,1.3+z,0]),[[-.347,.897,1.215,a2],[-.347,.897,1.385,a2],[.347,.897,1.215,-a2],[.347,.897,1.385,-a2]],[[-.31,.625,1.19,0],[-.31,.625,1.41,0],[.31,.625,1.19,0],[.31,.625,1.11,0]],[-.18,-.06,.06,.18].map(x=>[x,.76,1.37,0])];
+for(let i=0;i<4;i++){const g=G(0,0,0,PGG),pa=G(0,0,0,g);C(.02,.025,.05,M(0x15161a,.5),0,.025,0,pa,12);C(.026,.026,.014,M(0xd62828,.5),0,.057,0,pa,12);C(.03,.03,.006,DK,0,.003,0,g,12);hp(g,.055);const u={t:'plug',n:'Свеча зажигания',st:0,i};tag(g,u);glow(g,new THREE.SphereGeometry(.05,8,6),0,.03,0,'pl').vf=k=>(k=='plo'&&!u.st)||(k=='pli'&&(u.st==2||(u.st==1&&held=='plugs')));PGL.push({g,pa,u})}
+function plugSet(i){PGL.forEach(({g},j)=>{const p=PP[i][j];g.position.set(p[0],p[1],p[2]);g.rotation.z=p[3]})}
+const CB=[];
+[1.15,1.45].forEach(z=>{B(1.1,.04,.12,M(0x44484e,.6,.5),0,.335,z,car);[-1,1].forEach(q=>{B(.2,.025,.1,M(0x6a7077,.5,.8),q*.44,.375,z,car);const b=C(.025,.025,.04,M(0xb7bcc3,.3,.9),q*.5,.41,z,car,6),u={t:'mbolt',n:'Болт крепления двигателя',st:0,y0:.41};hp(b,.05);tag(b,u);CB.push(b);glow(car,new THREE.SphereGeometry(.05,8,6),q*.5,.415,z,'mb').vf=k=>(k=='mbo'&&!u.st)||(k=='mre'&&u.st==1)})});
+glow(car,new THREE.BoxGeometry(.7,.5,.8),0,.58,1.3,'ee').vf=k=>k=='eoff'||k=='efit';
+const bay=new THREE.Mesh(new THREE.BoxGeometry(.9,.5,.9),M(0));bay.visible=false;bay.position.set(0,.58,1.3);car.add(bay);tag(bay,{t:'bay',n:'Моторный отсек'});bay.layers.set(1);
+const SX=-4.2,SZ=-2.6,steel=M(0x4a4f56,.5,.6),stg=G(SX,0,SZ);
+[[-.9,-.3],[.9,-.3],[-.9,.3],[.9,.3]].forEach(([x,z])=>{C(.04,.04,.6,steel,x,.3,z,stg,10);C(.05,.05,.04,DK,x,.02,z,stg,10)});
+{const tt=B(2.0,.06,.7,M(0x3a3f46,.5,.6),0,.63,0,stg);tag(tt,{t:'stand',n:'Стойка для двигателя'})}
+B(2.0,.04,.04,steel,0,.4,-.3,stg);B(2.0,.04,.04,steel,0,.4,.3,stg);wall(SX,SZ,2.1,.8);
+glow(stg,new THREE.BoxGeometry(2.04,.1,.74),0,.63,0,'stg').vf=k=>k=='estd';
+const WORN=M(0x5a4636,.7,.3),NEWM=M(0xd9dde2,.25,.95),SEG=G(-.45,.66,0,stg),SHD=G(0,.28,0,SEG),PST=[],PXS=[-.21,-.07,.07,.21];
+B(.62,.28,.4,cast(0x8d939a,.5,.85),0,.14,0,SEG);PXS.forEach(x=>C(.064,.064,.003,DK,x,.2815,0,SEG,16));
+B(.5,.06,.05,RUST,0,.18,.23,SEG);B(.5,.06,.05,RUST,0,.18,-.23,SEG);C(.12,.12,.04,CHM,.33,.14,0,SEG,20).rotation.z=PI/2;C(.08,.08,.03,PUL,-.33,.14,0,SEG,20).rotation.z=PI/2;
+tag(SEG,{t:'seng',n:'Двигатель на стойке'});
+B(.62,.1,.4,cast(0xc3c8ce,.35,.95),0,.05,0,SHD);RX(.54,.08,.3,.02,M(0xc40d0d,.45,.3),0,.14,0,SHD);for(let i=0;i<5;i++)[-.17,.17].forEach(z=>C(.014,.014,.01,CHM,-.24+i*.12,.102,z,SHD,6));
+tag(SHD,{t:'shead',n:'Головка блока и клапанная крышка'});glow(SHD,new THREE.BoxGeometry(.66,.2,.44),0,.08,0,'sh').vf=k=>(k=='hd'&&!hdOff)||(k=='hdc'&&hdOff);
+PXS.forEach((x,i)=>{const g=G(x,.28,0,SEG),cr=C(.058,.058,.06,WORN,0,-.03,0,g,16);[-.012,-.03].forEach(y=>C(.06,.06,.005,DK,0,y,0,g,16));hp(g,.07);const u={t:'piston',n:'Поршень',st:0,nw:0,i,cr};tag(g,u);glow(g,new THREE.SphereGeometry(.07,8,6),0,-.03,0,'pi').vf=k=>(k=='pout'&&!u.st&&hdOff)||(k=='pin'&&u.st==1&&held=='pist');PST.push({g,u,cr})});
+glow(SEG,new THREE.BoxGeometry(.68,.48,.46),0,.24,0,'se').vf=k=>k=='eget';
+SEG.visible=false;SEG.traverse(o=>o.layers.set(1));
+for(let i=0;i<6;i++){const z=-4.7+i*.5,g=G(7.77,1.12,z);B(.14,.1,.22,M(0xe86a10,.5),0,0,0,g);for(let j=0;j<4;j++)C(.01,.01,.05,M(0xd9dde2,.3,.9),-.045+j*.03,.075,0,g,6);tag(g,{t:'pick',k:'plugs',n:'комплект свечей'});glow(g,new THREE.BoxGeometry(.2,.16,.28),0,.02,0,'rp').vf=k=>k=='plt';
+ const h=G(7.77,1.93,z);B(.14,.1,.22,M(0x2b5cab,.5),0,0,0,h);for(let j=0;j<3;j++)C(.028,.028,.05,NEWM,-.04+j*.04,.075,0,h,10);tag(h,{t:'pick',k:'pist',n:'комплект поршней'});glow(h,new THREE.BoxGeometry(.2,.16,.28),0,.02,0,'rq').vf=k=>k=='ptake'}
+function crate(c,old){const g=new THREE.Group();B(.3,.07,.16,M(c,.5),0,.035,0,g);for(let i=0;i<4;i++){C(.018,.018,.07,M(old?0x5a4a38:0xd9dde2,.3,old?.3:.9),-.1+i*.067,.105,0,g,8);C(.014,.014,.03,M(old?0x2a2420:0x15161a,.5),-.1+i*.067,.155,0,g,8)}return g}
+function crate2(c,old){const g=new THREE.Group();B(.34,.07,.18,M(c,.5),0,.035,0,g);for(let i=0;i<4;i++)C(.035,.035,.07,old?WORN:NEWM,-.12+i*.08,.105,0,g,12);return g}
+function engModel(){const g=new THREE.Group();B(.62,.28,.4,cast(0x8d939a,.5,.85),0,.14,0,g);B(.62,.1,.4,cast(0xc3c8ce,.35,.95),0,.33,0,g);RX(.54,.08,.3,.02,M(0xc40d0d,.45,.3),0,.42,0,g);C(.12,.12,.04,CHM,.33,.14,0,g,20).rotation.z=PI/2;C(.08,.08,.03,PUL,-.33,.14,0,g,20).rotation.z=PI/2;return g}
+function engShow(on){const e=EN[eV];e.g.visible=on;e.g.traverse(o=>o.layers.set(on?0:1));PGG.visible=on;PGG.traverse(o=>o.layers.set(on?0:1));bay.layers.set(on?1:0);engOut=on?0:1}
+function pstLay(){PST.forEach(p=>p.g.traverse(o=>o.layers.set(hdOff?0:1)))}
+function resetSp(){PGL.forEach(p=>{p.u.st=0;p.pa.position.y=0;p.pa.visible=true});CB.forEach(b=>{b.userData.st=0;b.position.y=b.userData.y0;b.visible=true});engShow(true);SEG.visible=false;SEG.traverse(o=>o.layers.set(1));onStand=0;hdOff=0;shp=0;SHD.position.set(0,.28,0);PST.forEach(p=>{p.u.st=0;p.u.nw=0;p.g.position.y=.28;p.g.visible=true;p.cr.material=WORN});dmp={}}
+function spAnim(dt){const k=Math.min(1,dt*10);PGL.forEach(({pa,u})=>{pa.position.y+=((u.st==1?.07:u.st==2?.03:0)-pa.position.y)*k;pa.visible=!(u.st==1&&pa.position.y>.062)});
+ CB.forEach(b=>{const u=b.userData,d=(u.y0+(u.st?.06:0)-b.position.y)*k;b.position.y+=d;b.rotation.y+=d*80;b.visible=!(u.st&&b.position.y>u.y0+.055)});
+ PST.forEach(({g,u})=>{g.position.y+=(.28+(u.st?.14:0)-g.position.y)*k;g.visible=!(u.st&&g.position.y>.41)});
+ shp+=((hdOff?1:0)-shp)*Math.min(1,dt*3);SHD.position.set(shp,.28-shp*.28+Math.sin(shp*PI)*.4,0)}
+function showPick(){pk=1;modal=1;hold=mh=0;if(document.pointerLockElement)document.exitPointerLock();$('pk').innerHTML='<h2 style="margin:0">Новая машина на приёмке</h2><div style="color:#aab">Выберите тип ремонта</div>'+[['std','Стандартный ремонт','Колёса и/или масло · $80–300'],['plug','Замена свечей зажигания','4 свечи · $220'],['eng','Полная переборка двигателя','Снять двигатель, заменить поршни, вернуть на место · $520']].map(([k,n,d])=>'<div class="it"><div><b>'+n+'</b><small>'+d+'</small></div><button class="ib" data-a="pick" data-k="'+k+'">Взять</button></div>').join('');$('pk').style.display='flex'}
+function newSp(k){const pl=k=='plug';resetSp();O={no:O.no+1,n:pl?'Замена свечей':'Переборка двигателя',pay:pl?220:520,oil:0,plug:pl,eng:!pl,s:pl?['hood','plo','plb','plt','pli','hoodc','submit']:['hood','mbo','eoff','estd','hd','pout','pbin','ptake','pin','hdc','eget','efit','mre','hoodc','submit']};
+ cur=0;pc=-1;paid=0;oil=0;ho=0;cp=0;selE(Math.random()*6|0);O.d=CARN[eV]+' ('+ENN[eV]+'): '+(pl?'заменить 4 свечи зажигания':'снять двигатель, заменить 4 поршня, установить обратно');
+ $('ot').textContent='Заказ №'+O.no+' · $'+O.pay;$('od').textContent=O.d;toast('Новый заказ №'+O.no+': '+O.n)}
+const EN=[eng(0),eng(1),eng2jz(),eng(1,1),engBox(),engK20()];let eV=1;
+function selE(i){eV=i;EN.forEach((e,j)=>{e.g.visible=j==i;e.g.traverse(o=>o.layers.set(j==i?0:1));if(j!=i)e.oilS.visible=false});const e=EN[i];cap=e.cap;neck=e.neck;oilS=e.oilS;capZ=e.cz0;PT.color.setHex(CARC[i]);scoopB.visible=i==4;scoopH.visible=i==3;plugSet(i)}
+selE(1);
+glow(hood,new THREE.BoxGeometry(1.74,.12,1.24),0,.03,.6,'hood');
+const fl=C(.06,.06,.16,M(0xe86a10,.45,.4),-.26,.34,1.25,car);const fb=C(.062,.062,.02,DK,-.26,.42,1.25,car);B(.1,.08,.1,DK,-.2,.34,1.25,car);hp(fl,.1);{const u={t:'info',n:'Масляный фильтр'};tag(fl,u);tag(fb,u)}
+const bat=B(.32,.24,.2,M(0x1d2a3a,.6),.47,.5,1.78,car),t1=C(.025,.025,.03,M(0xc62828),.39,.64,1.78,car,8),t2=C(.025,.025,.03,DK,.55,.64,1.78,car,8);hp(bat,.18);{const u={t:'info',n:'Аккумулятор'};tag(bat,u);tag(t1,u);tag(t2,u)}
+{const rd=new THREE.MeshStandardMaterial({map:tx(cnv(64,64,(g,w,h)=>{g.fillStyle='#16181b';g.fillRect(0,0,w,h);g.strokeStyle='#8a9199';g.lineWidth=1.3;for(let x=0;x<w;x+=3){g.beginPath();g.moveTo(x,0);g.lineTo(x,h);g.stroke()}}),10,3),roughness:.5,metalness:.7,envMap:ENV}),ra=G(0,.6,1.93,car),tk=M(0x2b2e33,.5,.5),hs_=M(0x111113,.7),gls=c=>new THREE.MeshStandardMaterial({color:c,roughness:.2,transparent:true,opacity:.65});
+ B(1.1,.44,.05,rd,0,0,0,ra);[-.58,.58].forEach(x=>B(.07,.5,.08,tk,x,0,0,ra));[-.25,.25].forEach(y=>B(1.2,.05,.08,tk,0,y,0,ra));C(.03,.03,.04,chr,.42,.29,0,ra,12);tag(ra,{t:'info',n:'Радиатор'});
+ const fn=G(0,.58,1.84,car);C(.05,.05,.04,DK,0,0,0,fn,16).rotation.x=PI/2;for(let i=0;i<7;i++){const q=G(0,0,0,fn);q.rotation.z=i*PI*2/7;B(.075,.19,.006,M(0x2a2d31,.6),0,.13,0,q).rotation.y=.35}
+ mk(new THREE.TorusGeometry(.235,.014,6,24),M(0x1c1e21,.7),0,0,0,fn);B(.52,.5,.02,DK,0,0,.045,fn);tag(fn,{t:'info',n:'Вентилятор радиатора'});
+ const h1=rod([.5,.84,1.9],[.12,.74,1.62],.032,hs_,car),h2=rod([-.5,.4,1.9],[-.1,.4,1.62],.032,hs_,car);tag(h1,{t:'info',n:'Патрубок радиатора'});tag(h2,{t:'info',n:'Патрубок радиатора'});
+ const wt=G(-.575,.62,1.55,car),wpl=M(0x2a2e33,.6);B(.12,.3,.34,wpl,0,0,0,wt);B(.125,.2,.3,M(0x2f6fb5,.4),0,-.02,0,wt);B(.13,.04,.36,wpl,0,.16,0,wt);C(.025,.03,.07,wpl,0,.2,.1,wt,10);C(.032,.032,.025,M(0x2a74d4,.5),0,.25,.1,wt,12);B(.02,.1,.3,wpl,-.07,.1,0,wt);
+ rod([.02,-.1,.17],[.02,-.1,.3],.012,hs_,wt);tag(wt,{t:'info',n:'Бачок омывателя'});
+ const ct=G(.575,.66,1.5,car);B(.1,.26,.2,gls(0xe9e4c0),0,0,0,ct);B(.092,.12,.192,M(0x3fb04a,.3),0,-.06,0,ct);B(.108,.02,.208,wpl,0,.14,0,ct);C(.04,.04,.03,M(0xe3b21e),0,.17,0,ct,14);C(.03,.03,.02,M(0xc62828,.5),0,.2,0,ct,10);
+ B(.1,.015,.012,DK,0,.08,.1,ct);B(.1,.015,.012,DK,0,-.1,.1,ct);rod([0,-.1,.08],[-.05,-.15,.4],.018,hs_,ct);tag(ct,{t:'info',n:'Бачок охлаждающей жидкости'});
+ const bs=C(.14,.14,.12,tk,-.4,.62,.97,car,20);bs.rotation.x=PI/2;tag(bs,{t:'info',n:'Вакуумный усилитель тормозов'});
+ const bm_=G(-.4,.62,1.1,car);C(.035,.035,.14,M(0x777c82,.4,.8),0,0,0,bm_,12).rotation.x=PI/2;B(.1,.08,.08,gls(0xcfc9b0),0,.1,0,bm_);C(.03,.03,.02,DK,0,.15,0,bm_,10);tag(bm_,{t:'info',n:'Бачок тормозной жидкости'})}
+
+
+
+const WS=[],bl=[];
+function sync(S){S.hx.layers.set(S.w?1:0);S.b.forEach(b=>b.userData.px.layers.set(S.w?0:1))}
+const rtT=new THREE.CanvasTexture(cnv(128,128,(c,w,h)=>{const q=c.createRadialGradient(64,64,10,64,64,64);q.addColorStop(0,'#8d9298');q.addColorStop(1,'#c3c8ce');c.fillStyle=q;c.fillRect(0,0,w,h);c.strokeStyle='rgba(0,0,0,.09)';c.lineWidth=1;for(let r=22;r<64;r+=2.2){c.beginPath();c.arc(64,64,r,0,PI*2);c.stroke()}c.fillStyle='#2a2d31';for(let r=0;r<2;r++)for(let i=0;i<18;i++){const a=i/18*PI*2+r*.17,rr=38+r*13;c.beginPath();c.arc(64+Math.cos(a)*rr,64+Math.sin(a)*rr,2.6,0,PI*2);c.fill()}c.strokeStyle='#4b4f55';c.lineWidth=2;for(let i=0;i<12;i++){const a=i/12*PI*2;c.beginPath();c.moveTo(64+Math.cos(a)*30,64+Math.sin(a)*30);c.lineTo(64+Math.cos(a+.35)*60,64+Math.sin(a+.35)*60);c.stroke()}}));rtT.encoding=THREE.sRGBEncoding;
+const rtM=new THREE.MeshStandardMaterial({map:rtT,roughness:.35,metalness:.85,envMap:ENV,envMapIntensity:1.1}),rbG=new THREE.BoxGeometry(.012,.07,.04),
+ spG=new THREE.TubeGeometry(Object.assign(new THREE.Curve(),{getPoint(t){return new THREE.Vector3(Math.cos(t*PI*14)*.055,t*.27,Math.sin(t*PI*14)*.055)}}),180,.009,6);
+const spG2=new THREE.TubeGeometry(Object.assign(new THREE.Curve(),{getPoint(t){return new THREE.Vector3(Math.cos(t*PI*12)*.052,t*.18,Math.sin(t*PI*12)*.052)}}),160,.008,6);
+function susp(g,fr){const sub=n=>{const q=G(0,0,0,g);q.nm=n;return q},fin=q=>tag(q,{t:'info',n:q.nm}),st=M(0x5a5f66,.5,.7);
+ let q=sub('Ступица');C(.125,.125,.03,M(0x7a8086,.35,.85),0,0,.082,q,24).rotation.x=PI/2;C(.06,.06,.1,M(0x555a60,.4,.8),0,0,.03,q,16).rotation.x=PI/2;
+ for(let i=0;i<4;i++){const a=PI/4+i*PI/2;C(.011,.011,.075,M(0xb7bcc3,.3,.95),Math.cos(a)*.1,Math.sin(a)*.1,.115,q,8).rotation.x=PI/2}fin(q);
+ q=sub('Вентилируемый тормозной диск');C(.09,.09,.13,M(0x6e7379,.4,.85),0,0,-.005,q,24).rotation.x=PI/2;
+ [-.01,-.07].forEach(z=>{mk(new THREE.CylinderGeometry(.175,.175,.014,40),[M(0x9a9fa5,.35,.9),rtM,rtM],0,0,z,q).rotation.x=PI/2});
+ const im=new THREE.InstancedMesh(rbG,M(0x7b8086,.5,.8),18),d=new THREE.Object3D();for(let i=0;i<18;i++){const a=i/18*PI*2;d.position.set(Math.cos(a)*.13,Math.sin(a)*.13,-.04);d.rotation.set(0,0,a-PI/2);d.updateMatrix();im.setMatrixAt(i,d.matrix)}im.frustumCulled=false;q.add(im);fin(q);
+ q=sub('Тормозной суппорт');const cm=M(fr?0xd01616:0xe8b800,.3,.35),gp=G(Math.cos(.35)*.15,Math.sin(.35)*.15,-.04,q);gp.rotation.z=.35;
+ B(.085,.13,.125,cm,0,0,0,gp);[-.03,.03].forEach(y=>C(.024,.024,.012,chr,.01,y,.066,gp,14).rotation.x=PI/2);B(.04,.018,.002,M(0xf2f2f2,.5),0,0,.0635,gp);C(.008,.008,.03,chr,.03,.05,0,gp,8);
+ B(.16,.1,.05,st,.11,.04,-.12,q);fin(q);
+ q=sub('Поворотный кулак');const rs_=Math.sign(g.rotation.y)||1,kn=M(0x4a4f56,.5,.7);
+ C(.15,.15,.03,kn,0,0,-.135,q,32).rotation.x=PI/2;C(.065,.065,.08,M(0x555a60,.4,.8),0,0,-.13,q,18).rotation.x=PI/2;C(.055,.055,.08,M(0x7a8086,.35,.85),0,0,-.07,q,18).rotation.x=PI/2;
+ B(.05,.12,.04,kn,0,.17,-.155,q);C(.042,.042,.15,kn,0,.2,-.17,q,14);B(.05,.08,.04,kn,0,-.16,-.15,q);mk(new THREE.SphereGeometry(.03,10,8),chr,0,-.2,-.155,q);
+ if(fr){B(.1,.03,.03,kn,rs_*.1,-.05,-.15,q);rod([rs_*.15,-.05,-.15],[rs_*.3,-.06,-.268],.011,chr,q);mk(new THREE.SphereGeometry(.02,8,6),chr,rs_*.15,-.05,-.15,q)}
+ fin(q);
+ q=sub('Амортизаторная стойка с пружиной');
+ C(.028,.028,.25,M(0x25282c,.5,.6),0,.275,-.17,q,14);C(.013,.013,.18,chr,0,.49,-.17,q,10);C(.02,.02,.12,DK,0,.46,-.17,q,10);
+ C(.07,.07,.014,M(0x3a3d42,.5,.6),0,.37,-.17,q,20);mk(spG2,M(0xd2321f,.4,.6),0,.372,-.17,q);C(.07,.07,.014,M(0x3a3d42,.5,.6),0,.558,-.17,q,20);
+ C(.05,.05,.03,DK,0,.58,-.17,q,16);B(.07,.05,.13,st,0,.585,-.235,q);fin(q);
+ q=sub('Рычаг подвески');const am=M(0x1e2024,.6,.5);
+ [-1,1].forEach(x=>{rod([x*.28,-.09,-.265],[0,-.2,-.155],.016,am,q);B(.08,.05,.05,am,x*.28,-.09,-.265,q);mk(new THREE.SphereGeometry(.026,10,8),DK,x*.28,-.09,-.265,q)});fin(q);
+ q=sub('Приводной вал (ШРУС)');const sh=M(0x9aa0a6,.3,.9),bt=M(0x0e0e10,.9),hsg=M(0x6a7077,.4,.85);
+ C(.022,.022,.29,sh,0,0,-.055,q,10).rotation.x=PI/2;C(.055,.04,.07,hsg,0,0,-.2,q,16).rotation.x=PI/2;C(.04,.025,.045,bt,0,0,-.2575,q,14).rotation.x=PI/2;
+ C(.02,.02,.43,sh,0,0,-.45,q,10).rotation.x=PI/2;
+ for(let i=0;i<8;i++)C(i&1?.04:.052,i&1?.04:.052,.012,bt,0,0,-.62-i*.011,q,14).rotation.x=PI/2;
+ C(.045,.045,.1,hsg,0,0,-.75,q,14).rotation.x=PI/2;C(.035,.035,.1,hsg,0,0,-.84,q,12).rotation.x=PI/2;fin(q);
+ const ln=C(.36,.36,.01,M(0x0b0b0d,.95),0,0,-.268,g,32);ln.rotation.x=PI/2;tag(ln,{t:'info',n:'Колёсная арка'});mk(new THREE.TorusGeometry(.365,.02,8,40),PT,0,0,-.262,g)}
+function seat(dt){WS.forEach(S=>{const w=S.w;if(w&&w.position.z>.002){const k=Math.max(0,1-dt*12);w.position.z*=k;w.rotation.z*=k;if(w.position.z<=.002){w.position.z=0;w.rotation.z=0;if(S.sd){S.sd=0;clunk()}}}})}
+function mount(S,w,nw){if(nw){w.position.z=.28;w.rotation.z=.6;S.sd=1}S.g.add(w);S.w=w;S.nw=nw;tag(w,{t:'wheel',s:S,n:'Колесо'});sync(S)}
+function unmount(S){S.g.remove(S.w);S.w=null;sync(S)}
+[-1,1].forEach(s=>[1.3,-1.3].forEach(z=>{
+ const g=G(s*1.12,.34,z,car),isT=s==-1&&z==1.3,S={g,w:null,nw:0,flat:isT?1:0,sty:WS.length%3,b:[]};g.rotation.y=s*PI/2;WS.push(S);
+ susp(g,z>0);
+ const hx=new THREE.Mesh(new THREE.SphereGeometry(.14,8,6),M(0));hx.visible=false;hx.position.z=.06;hx.userData={t:'hub',s:S,n:'Ступица'};g.add(hx);S.hx=hx;
+ glow(g,new THREE.SphereGeometry(.2,12,8),0,0,.06,'hub').s=S;
+ for(let i=0;i<4;i++){const a=PI/4+i*PI/2,x=Math.cos(a)*.1,y=Math.sin(a)*.1,b=C(.024,.024,.04,M(0x9aa0a6,.3,.9),x,y,.13,g,6);b.rotation.x=PI/2;
+  const u=b.userData={t:'bolt',n:'Болт колеса',st:0,z0:.13,s:S},px=new THREE.Mesh(new THREE.SphereGeometry(.05,6,4),M(0));px.visible=false;px.userData=u;b.add(px);u.px=px;
+  glow(g,new THREE.SphereGeometry(.05,8,6),x,y,.14,'bolt').b=b;S.b.push(b);bl.push(b)}
+ const w=wheel(isT,S.sty);mount(S,w,0);if(isT)glow(w,new THREE.CylinderGeometry(.38,.38,.3,20),0,0,0,'old').rotation.x=PI/2}));
+let T=WS[0];
+
+const hs=new THREE.Scene(),hc=new THREE.PerspectiveCamera(55,1,.01,5),hand=new THREE.Group();hs.add(hand,new THREE.HemisphereLight(0xffffff,0x707070,1.3));
+const dl=new THREE.DirectionalLight(0xffffff,1.1);dl.position.set(-1,2,1.5);hs.add(dl);
+const GV=M(0xd9a43c,.85),SL=M(0x2d4f7a,.9),arm=G(0,0,0,hand);
+B(.1,.1,.5,SL,.03,-.08,.32,arm).rotation.x=.3;
+const fist=G(0,0,0,arm);B(.1,.09,.12,GV,0,0,0,fist);B(.03,.05,.07,GV,-.06,.01,-.01,fist);for(let i=0;i<4;i++)B(.022,.03,.05,GV,-.033+i*.022,0,-.07,fist);
+const open=G(0,0,0,arm);B(.1,.025,.11,GV,0,0,-.04,open);for(let i=0;i<4;i++)B(.022,.022,.08+(i==1||i==2?.015:0),GV,-.033+i*.022,0,-.13,open);B(.03,.022,.07,GV,-.07,0,-.04,open).rotation.y=.5;
+const wr=G(0,0,0,hand),sock=G(0,.075,-.36,wr);
+B(.045,.13,.05,M(0x1e1e22,.6),0,-.01,0,wr);B(.07,.05,.1,M(0xf2b705,.5),0,-.085,0,wr);
+C(.042,.042,.28,M(0xd62828,.5),0,.075,-.15,wr).rotation.x=PI/2;C(.046,.046,.05,M(0x1e1e22,.6),0,.075,-.01,wr).rotation.x=PI/2;
+C(.02,.02,.05,M(0xaaaaaa,.3,.9),0,.075,-.31,wr).rotation.x=PI/2;C(.028,.028,.06,M(0x777b80,.3,.9),0,0,0,sock,6).rotation.x=PI/2;
+const cn=G(0,0,0,hand),ci=build.can();ci.scale.setScalar(.65);ci.position.set(-.02,-.27,-.1);ci.rotation.y=.3;cn.add(ci);
+const hh=G(0,0,0,hand),HS={can:[.65,[-.02,-.27,-.1]],bat:[.9,[0,-.2,-.08]],wheel:[.5,[0,.1,-.25]],plugs:[1,[0,-.18,-.22]],oldplugs:[1,[0,-.18,-.22]],pist:[1,[0,-.18,-.22]],oldpist:[1,[0,-.18,-.22]],eng:[.4,[0,-.16,-.42]]};
+
+const NM=['Руки','Гайковерт','Канистра масла'],need={hood:0,cap:0,pick:0,bolt:1,neck:2,wheel:0,bin:0,hub:0};
+const SN={hood:'Открыть капот',capo:'Открыть крышку горловины',pour:'Залить масло из канистры',capc:'Закрыть крышку',hoodc:'Закрыть капот',lift:'Поднять машину',unbolt:'Открутить 4 болта',off:'Снять старое колесо',bin:'Выбросить в контейнер',take:'Взять новое колесо',mount:'Установить на ступицу',rebolt:'Закрутить 4 болта',lower:'Опустить машину',submit:'Сдать работу',plo:'Выкрутить 4 свечи',plb:'Выбросить старые свечи',plt:'Взять новые свечи',pli:'Вставить и затянуть свечи',mbo:'Открутить крепления двигателя',eoff:'Снять двигатель',estd:'Поставить на стойку',hd:'Снять головку блока',pout:'Достать 4 старых поршня',pbin:'Выбросить поршни',ptake:'Взять новые поршни',pin:'Установить новые поршни',hdc:'Установить головку',eget:'Снять со стойки',efit:'Поставить в отсек',mre:'Закрутить крепления двигателя'};
+let slot=0,held=null,tg=null,ls='',bx=.3,ly=0,lt=0,ha=0,ho=0,ca=0,cp=0,pr=0,wt=0,mvm=0,hb=0,eq=0,ua=0,fc_=0,uc=0,tt,prog=0,dn=0,hold=0,mh=0,tgp=null,cur=0,pc=-1,money=0,paid=0,trashed=false,heldOld=false,heldFlat=0,oh='',hh_='';
+const SC={hood:()=>ho,capo:()=>cp,pour:()=>oil>=O.oil,capc:()=>!cp,hoodc:()=>!ho,lift:()=>ly>1.6,unbolt:()=>T.b.every(b=>b.userData.st),off:()=>!T.w,bin:()=>trashed,take:()=>(held=='wheel'&&!heldOld)||(T.w&&T.nw),mount:()=>T.w&&T.nw,rebolt:()=>T.w&&T.b.every(b=>!b.userData.st),lower:()=>ly<.05&&!lt,submit:()=>paid,plo:()=>PGL.every(p=>p.u.st==1),plb:()=>dmp.oldplugs,plt:()=>held=='plugs'||PGL.some(p=>p.u.st==2),pli:()=>PGL.every(p=>!p.u.st),mbo:()=>CB.every(b=>b.userData.st),eoff:()=>engOut,estd:()=>onStand,hd:()=>hdOff,pout:()=>PST.every(p=>p.u.st==1),pbin:()=>dmp.oldpist,ptake:()=>held=='pist'||PST.some(p=>p.u.nw),pin:()=>PST.every(p=>!p.u.st&&p.u.nw),hdc:()=>!hdOff,eget:()=>held=='eng'&&!onStand,efit:()=>!engOut,mre:()=>CB.every(b=>!b.userData.st)};
+let heldStyle=0,O,oil=0,hintsOn=true,snd_on=true,modal=0,ac;const nz={w:0,l:0,p:0},sk=()=>O.s[cur];
+const OT=[{n:'Доливка масла',j:'o',oil:1,pay:80},{n:'Замена масла',j:'o',oil:2,pay:130},{n:'Замена колеса',j:'w',pay:150},{n:'Масло + колесо',j:'ow',oil:1,pay:240},{n:'Масло ×2 + колесо',j:'ow',oil:2,pay:300}];
+function newOrder(f,k){if(k){newSp(k);return}resetSp();let t;do{t=f?OT[2]:OT[Math.random()*OT.length|0]}while(!f&&O&&t.n==O.n);
+ const w=t.j.includes('w'),o=t.oil||0;O={no:(O?O.no:0)+1,n:t.n,pay:t.pay,oil:o,s:[...(o?['hood','capo','pour','capc','hoodc']:[]),...(w?['lift','unbolt','off','bin','take','mount','rebolt','lower']:[]),'submit']};
+ cur=0;pc=-1;paid=0;oil=0;selE(f?1:Math.random()*6|0);if(o){ho=0;cp=0}
+ if(w){if(!f){T=WS[Math.random()*4|0];if(T.w)unmount(T);T.flat=1;const nw=wheel(true,T.sty);mount(T,nw,0);glow(nw,new THREE.CylinderGeometry(.38,.38,.3,20),0,0,0,'old').rotation.x=PI/2}trashed=false;binTire.visible=false}
+ O.d=[w?'Заменить спущенное колесо ('+(T.g.position.z>0?'переднее':'заднее')+' '+(T.g.position.x<0?'правое':'левое')+')':'',o?'Залить масла: '+o+' канистр'+(o>1?'ы':'у')+' ('+CARN[eV]+', '+ENN[eV]+')':''].filter(Boolean).join(' + ');
+ $('ot').textContent='Заказ №'+O.no+' · $'+O.pay;$('od').textContent=O.d;if(!f)toast('Новый заказ №'+O.no+': '+O.n)}
+const au=()=>{const A=window.AudioContext||window.webkitAudioContext;if(!ac&&A)ac=new A();if(ac&&ac.state=='suspended')ac.resume();return ac};
+function tone(f,d,ty,v,f2,t0){const a=au();if(!a||!snd_on)return;const t=a.currentTime+(t0||0),o=a.createOscillator(),g=a.createGain();o.type=ty||'sine';o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(f2||f,t+d);g.gain.setValueAtTime(v||.1,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g).connect(a.destination);o.start(t);o.stop(t+d)}
+function noise(d,v,fr){const a=au();if(!a||!snd_on)return;const n=a.sampleRate*d|0,b=a.createBuffer(1,n,a.sampleRate),x=b.getChannelData(0);for(let i=0;i<n;i++)x[i]=Math.random()*2-1;const q=a.createBufferSource(),fl=a.createBiquadFilter(),g=a.createGain();q.buffer=b;fl.type='bandpass';fl.frequency.value=fr;g.gain.setValueAtTime(v,a.currentTime);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+d);q.connect(fl).connect(g).connect(a.destination);q.start()}
+const clunk=()=>{tone(110,.2,'square',.12,50);noise(.12,.15,500)},coins=()=>{[1319,1568,2093,2637].forEach((f,i)=>tone(f,.35,'triangle',.1,f,i*.08));noise(.3,.04,6000)};
+const SH=[['wr','Ускоренный гайковёрт','Болты откручиваются и закручиваются быстрее',[120,280,520]],['lf','Быстрый подъёмник','Машина поднимается и опускается быстрее',[100,240,450]],['gl','Усиленные перчатки','Быстрее брать, снимать и ставить колёса',[150,350]]],UP={wr:0,lf:0,gl:0};
+function shopR(){$('shop').innerHTML='<h2 style="margin:0">Магазин</h2><div style="color:#7dff6b;font-weight:700;font-size:20px">$ '+money+'</div>'+SH.map(([k,n,d,p])=>{const l=UP[k],c=p[l];return'<div class="it"><div><b>'+n+'</b> · ур. '+l+'/'+p.length+'<small>'+d+'</small></div>'+(c==null?'<b style="color:#7dff6b">МАКС</b>':'<button class="ib" data-a="buy" data-k="'+k+'"'+(money<c?' style="opacity:.4"':'')+'>$ '+c+'</button>')+'</div>'}).join('')+'<button class="ib" data-a="close" style="margin-top:6px;padding:10px 26px;font-size:15px">Закрыть</button>'}
+function openShop(){modal=1;hold=mh=0;if(document.pointerLockElement)document.exitPointerLock();shopR();$('shop').style.display='flex'}
+function closeShop(){modal=0;$('shop').style.display='none';if(!touch&&started){const p=cv0.requestPointerLock();p&&p.catch&&p.catch(()=>{})}}
+const sv=()=>{try{localStorage.setItem('garage',JSON.stringify({h:hintsOn,s:snd_on}))}catch(_){}};
+try{const q=JSON.parse(localStorage.getItem('garage')||'{}');if(q.h===false)hintsOn=false;if(q.s===false)snd_on=false}catch(_){}
+function syncUI(){document.body.classList.toggle('nh',!hintsOn);document.querySelectorAll('[data-a=hint]').forEach(b=>{b.innerHTML='Подсказки: '+(hintsOn?'ВКЛ':'ВЫКЛ')+' <small class="k">[H]</small>';b.classList.toggle('off',!hintsOn)});document.querySelectorAll('[data-a=snd]').forEach(b=>{b.innerHTML='Звук: '+(snd_on?'ВКЛ':'ВЫКЛ')+' <small class="k">[M]</small>';b.classList.toggle('off',!snd_on)});document.querySelectorAll('[data-a=shop]').forEach(b=>b.innerHTML='Магазин <small class="k">[B]</small>')}
+const act={hint(){hintsOn=!hintsOn;sv();syncUI();drawScr();toast('Подсказки: '+(hintsOn?'ВКЛ':'ВЫКЛ'))},snd(){snd_on=!snd_on;sv();syncUI()},shop(){if(pk)return;modal?closeShop():openShop()},close:closeShop,pick(b){pk=0;modal=0;$('pk').style.display='none';newOrder(0,b.dataset.k=='std'?0:b.dataset.k);if(!touch&&started){const p=cv0.requestPointerLock();p&&p.catch&&p.catch(()=>{})}},
+ buy(b){const k=b.dataset.k,c=SH.find(x=>x[0]==k)[3][UP[k]];if(c!=null&&money>=c){money-=c;UP[k]++;coins();shopR()}else tone(150,.15,'square',.08)}};
+document.addEventListener('pointerdown',e=>{au();const b=e.target.closest('[data-a]');if(b){e.preventDefault();e.stopPropagation();act[b.dataset.a](b)}},true);
+['click','keydown','touchend'].forEach(n=>addEventListener(n,au,true));
+const P={x:0,z:5.5,yaw:0,pit:0},K={},ctr=new THREE.Vector2(0,0),rc=new THREE.Raycaster(),lab=$('lab'),crs=$('cross'),bar=$('bar'),ab=$('ab'),at=$('at'),rg=$('rg');rc.far=3.2;
+const toast=m=>{const t=$('ts');t.textContent=m;t.style.opacity=1;clearTimeout(tt);tt=setTimeout(()=>t.style.opacity=0,1800)};
+function refresh(){open.visible=slot==0&&!held;fist.visible=!open.visible;wr.visible=slot==1;cn.visible=slot==2;hh.visible=slot==0&&!!held}
+function mkHeld(){hh.children.slice().forEach(c=>hh.remove(c));if(!held)return;const o=build[held](heldFlat),h=HS[held]||[.5,[0,.1,-.25]];o.scale.setScalar(h[0]);o.position.set(...h[1]);o.rotation.y=held=='wheel'?.5:.3;hh.add(o)}
+function setSlot(i){slot=i;eq=1;refresh();[...bar.children].forEach((e,j)=>e.classList.toggle('on',j==i));toast(NM[i])}
+function ent0(d){const t=d.t,n=need[t];
+ if(n!==undefined&&n!=slot)return{ok:0,why:'нужен слот '+(n+1)+' ('+NM[n]+')'};
+ if(t=='dip')return{ok:1,v:'Проверить щуп',dur:.4};
+ if(t=='btn')return{ok:1,v:lt?'Опустить':'Поднять',dur:.4};
+ if(t=='hood')return{ok:1,v:ho?'Закрыть':'Открыть',dur:.5};
+ if(t=='cap')return{ok:1,v:cp?'Закрыть':'Открыть',dur:.4};
+ if(t=='neck')return cp?{ok:1,v:'Залить',dur:.6}:{ok:0,why:'сначала откройте крышку'};
+ if(t=='bolt')return !d.st?{ok:1,v:'Открутить',dur:.7}:d.s.w?{ok:1,v:'Закрутить',dur:.7}:{ok:0,why:'сначала установите колесо'};
+ if(t=='wheel')return held?{ok:0,why:'руки заняты'}:d.s.b.some(b=>!b.userData.st)?{ok:0,why:'сначала открутите все 4 болта'}:{ok:1,v:'Снять',dur:1.2};
+ if(t=='pick')return heldOld?{ok:0,why:'сначала выбросьте старое'}:['eng','plugs','oldplugs','pist','oldpist'].includes(held)?{ok:0,why:'руки заняты'}:{ok:1,v:'Взять',dur:.5};
+ if(t=='bin')return held=='eng'?{ok:0,why:'двигатель не выбрасывают'}:held?{ok:1,v:'Выбросить',dur:.6}:{ok:0,why:'нечего выбрасывать'};
+ if(t=='hub')return held=='wheel'&&!heldOld?{ok:1,v:'Установить',dur:1}:{ok:0,why:'нужно новое колесо'};
+ if(t=='submit')return sk()=='submit'?{ok:1,v:'Сдать работу',dur:.8}:{ok:0,why:cur>=O.s.length?'заказ уже сдан':'работа не завершена'};
+ if(t=='plug'){if(!O.plug)return{ok:0};if(d.st==1)return slot!=0?{ok:0,why:'нужен слот 1 (Руки)'}:held=='plugs'?{ok:1,v:'Вставить',dur:.5}:{ok:0,why:'нужны новые свечи в руках'};if(slot!=1)return{ok:0,why:'нужен слот 2 (Гайковерт)'};if(d.st==2)return{ok:1,v:'Затянуть',dur:.6};return !ho?{ok:0,why:'откройте капот'}:held?{ok:0,why:'руки заняты'}:{ok:1,v:'Выкрутить',dur:.6}}
+ if(t=='mbolt'){if(!O.eng)return{ok:0};if(slot!=1)return{ok:0,why:'нужен слот 2 (Гайковерт)'};if(!d.st)return ho?{ok:1,v:'Открутить',dur:.7}:{ok:0,why:'откройте капот'};return engOut?{ok:0,why:'сначала установите двигатель'}:{ok:1,v:'Закрутить',dur:.7}}
+ if(t=='eng'||t=='stand'||t=='seng'||t=='shead'||t=='piston'||t=='bay'){if(!O.eng)return{ok:0};if(slot)return{ok:0,why:'нужен слот 1 (Руки)'};
+  if(t=='eng')return !ho?{ok:0,why:'откройте капот'}:held?{ok:0,why:'руки заняты'}:CB.every(b=>b.userData.st)?{ok:1,v:'Снять двигатель',dur:2.2}:{ok:0,why:'сначала открутите 4 крепления'};
+  if(t=='stand')return held=='eng'&&!onStand?{ok:1,v:'Поставить на стойку',dur:1.5}:{ok:0,why:'нужен двигатель в руках'};
+  if(t=='seng')return onStand&&!held&&sk()=='eget'?{ok:1,v:'Снять со стойки',dur:1.5}:{ok:0};
+  if(t=='shead')return !onStand?{ok:0}:!hdOff?(sk()=='hd'?{ok:1,v:'Снять головку',dur:1.3}:{ok:0}):sk()=='hdc'?(held?{ok:0,why:'руки заняты'}:{ok:1,v:'Установить головку',dur:1.3}):{ok:0};
+  if(t=='piston')return !hdOff?{ok:0,why:'сначала снимите головку'}:d.st==0?(sk()=='pout'?(held?{ok:0,why:'руки заняты'}:{ok:1,v:'Достать поршень',dur:.5}):{ok:0}):held=='pist'?{ok:1,v:'Установить поршень',dur:.6}:{ok:0,why:'нужны новые поршни в руках'};
+  if(t=='bay')return engOut?(held=='eng'?(ho?{ok:1,v:'Установить двигатель',dur:2.2}:{ok:0,why:'откройте капот'}):{ok:0,why:'нужен двигатель в руках'}):{ok:0}}
+ return{ok:0}}
+function ent(d){const e=ent0(d);if(e.ok){const t=d.t;if(t=='bolt'||t=='mbolt'||(t=='plug'&&d.st!=1))e.dur/=1+.6*UP.wr;else if(['wheel','pick','bin','hub','eng','stand','seng','shead','piston','bay','plug'].includes(t))e.dur/=1+.4*UP.gl}return e}
+function run(d){const t=d.t;ua=1;
+ if(t=='bolt'||t=='mbolt'||t=='plug')tone(700,.05,'square',.08);else if(['eng','stand','seng','bay','shead','piston'].includes(t))clunk();else if(t=='btn')tone(300,.12,'square',.1,200);else if(t=='wheel'||t=='pick'||t=='bin'||t=='hub')clunk();else if(t=='hood'||t=='cap')tone(220,.15,'triangle',.12,120);else if(t=='submit')coins();
+ if(t=='btn'){lt=lt?0:1.7;bm.color.setHex(lt?0xd62828:0x1fa34a);bm.emissive.setHex(lt?0x700000:0x0a5a20)}
+ else if(t=='dip')toast('Щуп: уровень масла '+(O.oil&&oil<O.oil?'низкий ⚠':'в норме ✔'));
+ else if(t=='hood')ho=ho?0:-1.25;
+ else if(t=='cap')cp^=1;
+ else if(t=='neck'){if(pr<=0)pr=1.3}
+ else if(t=='bolt')d.st^=1;
+ else if(t=='wheel'){heldFlat=d.s.flat;heldStyle=d.s.sty;unmount(d.s);held='wheel';heldOld=true;mkHeld();refresh();toast('Колесо снято')}
+ else if(t=='pick'){held=d.k;heldOld=false;heldFlat=0;heldStyle=d.st||0;mkHeld();refresh();toast('Взято: '+d.n)}
+ else if(t=='bin'){dmp[held]=1;if(heldOld&&heldFlat){trashed=true;binTire.visible=true}held=null;heldOld=false;mkHeld();refresh();toast('Выброшено')}
+ else if(t=='hub'){d.s.flat=0;d.s.sty=heldStyle;mount(d.s,wheel(false,heldStyle),1);held=null;mkHeld();refresh();toast('Колесо установлено')}
+ else if(t=='plug'){if(d.st==0){d.st=1;if(PGL.every(p=>p.u.st==1)&&!held){held='oldplugs';heldOld=true;heldFlat=0;mkHeld();refresh();toast('Старые свечи в руках')}}else if(d.st==1){d.st=2;if(PGL.every(p=>p.u.st!=1)){held=null;heldOld=false;mkHeld();refresh()}}else d.st=0}
+ else if(t=='mbolt')d.st^=1;
+ else if(t=='eng'){engShow(false);held='eng';heldOld=false;heldFlat=0;mkHeld();refresh();toast('Двигатель снят')}
+ else if(t=='stand'){held=null;onStand=1;SEG.visible=true;SEG.traverse(o=>o.layers.set(0));pstLay();mkHeld();refresh();toast('Двигатель на стойке')}
+ else if(t=='seng'){onStand=0;SEG.visible=false;SEG.traverse(o=>o.layers.set(1));held='eng';heldOld=false;mkHeld();refresh();toast('Двигатель в руках')}
+ else if(t=='shead'){hdOff=hdOff?0:1;pstLay();toast(hdOff?'Головка снята':'Головка установлена')}
+ else if(t=='piston'){if(d.st==0){d.st=1;if(PST.every(p=>p.u.st==1)&&!held){held='oldpist';heldOld=true;heldFlat=0;mkHeld();refresh();toast('Старые поршни в руках')}}else{d.st=0;d.nw=1;d.cr.material=NEWM;if(PST.every(p=>!p.u.st&&p.u.nw)){held=null;heldOld=false;mkHeld();refresh()}}}
+ else if(t=='bay'){engShow(true);held=null;mkHeld();refresh();toast('Двигатель установлен')}
+ else if(t=='submit'){paid=1;money+=O.pay;setTimeout(showPick,2600)}}
+function hint(){const r=T.b.filter(b=>b.userData.st).length,hn=held=='wheel'&&!heldOld,h0=slot!=0?'переключитесь на руки [1] и ':'',w1=slot!=1?'возьмите гайковерт [2] и ':'',c3=slot!=2?'возьмите канистру [3] и ':'';
+ switch(sk()){
+ case'hood':return U(h0+'откройте капот');
+ case'capo':return U(h0+'откройте крышку маслозаливной горловины');
+ case'pour':return U(c3+'залейте масло в горловину'+(O.oil>1?' ('+oil+'/'+O.oil+')':''));
+ case'capc':return U(h0+'закройте крышку горловины');
+ case'hoodc':return U(h0+'закройте капот');
+ case'lift':return'Нажмите кнопку на стойке подъёмника';
+ case'unbolt':return U(w1+'открутите 4 болта ('+r+'/4)');
+ case'off':return U(h0+'снимите старое колесо');
+ case'bin':return U(h0+'выбросите колесо в контейнер');
+ case'take':return U(h0+'возьмите новое колесо со стеллажа');
+ case'mount':return hn?U(h0+'поставьте колесо на ступицу'):U(h0+'возьмите новое колесо со стеллажа');
+ case'rebolt':return U(w1+'закрутите 4 болта ('+(4-r)+'/4)');
+ case'lower':return'Опустите машину кнопкой на стойке';
+ case'submit':return'Подойдите к терминалу и нажмите «Сдать работу»';
+ case'plo':return U(w1+'выкрутите 4 свечи ('+PGL.filter(p=>p.u.st==1).length+'/4)');
+ case'plb':return U(h0+'выбросите старые свечи в контейнер');
+ case'plt':return U(h0+'возьмите новые свечи со стеллажа');
+ case'pli':return held=='plugs'?U(h0+'вставьте свечи в гнёзда ('+PGL.filter(p=>p.u.st!=1).length+'/4)'):U(w1+'затяните свечи ('+PGL.filter(p=>!p.u.st).length+'/4)');
+ case'mbo':return U(w1+'открутите 4 крепления двигателя ('+CB.filter(b=>b.userData.st).length+'/4)');
+ case'eoff':return U(h0+'снимите двигатель целиком');
+ case'estd':return U(h0+'поставьте двигатель на стойку слева');
+ case'hd':return U(h0+'снимите головку блока');
+ case'pout':return U(h0+'достаньте 4 старых поршня ('+PST.filter(p=>p.u.st==1).length+'/4)');
+ case'pbin':return U(h0+'выбросите старые поршни в контейнер');
+ case'ptake':return U(h0+'возьмите новые поршни со стеллажа');
+ case'pin':return U(h0+'установите новые поршни ('+PST.filter(p=>!p.u.st&&p.u.nw).length+'/4)');
+ case'hdc':return U(h0+'установите головку блока на место');
+ case'eget':return U(h0+'снимите двигатель со стойки');
+ case'efit':return U(h0+'установите двигатель в отсек');
+ case'mre':return U(w1+'закрутите 4 крепления двигателя ('+CB.filter(b=>!b.userData.st).length+'/4)');
+ default:return'Заказ выполнен! +$'+O.pay}}
+function ui(){const r=T.b.filter(b=>b.userData.st).length;
+ const li=hintsOn?O.s.map((s,i)=>'<li class="'+(i<cur?'d':i==cur?'c':'')+'">'+(i<cur?'☑ ':'☐ ')+SN[s]+(i==cur&&s=='unbolt'?' ('+r+'/4)':i==cur&&s=='rebolt'?' ('+(4-r)+'/4)':i==cur&&s=='pour'&&O.oil>1?' ('+oil+'/'+O.oil+')':'')+'</li>').join(''):'';
+ if(li!==oh){oh=li;$('ol').innerHTML=li}
+ const h=hint();if(h!==hh_){hh_=h;$('hint').textContent=h}
+ $('money').textContent='$ '+money;
+ const ps=!hintsOn?-1:sk()=='pour'?2:['unbolt','rebolt','mbo','mre','plo'].includes(sk())?1:['hood','capo','capc','hoodc','off','bin','take','mount','plb','plt','pli','eoff','estd','hd','pout','pbin','ptake','pin','hdc','eget','efit'].includes(sk())?0:-1;[...bar.children].forEach((e,i)=>e.classList.toggle('pl',ps==i&&slot!=i))}
+[...bar.children].forEach((e,i)=>e.addEventListener('pointerdown',ev=>{ev.preventDefault();ev.stopPropagation();setSlot(i)}));
+ab.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();hold=1;try{ab.setPointerCapture(e.pointerId)}catch(_){}});
+['pointerup','pointercancel'].forEach(n=>addEventListener(n,()=>hold=0));
+newOrder(1);refresh();drawScr();syncUI();
+
+const look=(dx,dy)=>{P.yaw-=dx;P.pit=cl(P.pit-dy,-1.45,1.45)};
+addEventListener('keydown',e=>{K[e.code]=1;if(!e.repeat){if(e.code=='KeyH')act.hint();if(e.code=='KeyM')act.snd();if(e.code=='KeyB')act.shop();if(e.code=='Escape'&&modal&&!pk)closeShop()}if(e.code=='Digit1')setSlot(0);if(e.code=='Digit2')setSlot(1);if(e.code=='Digit3')setSlot(2)});
+addEventListener('keyup',e=>K[e.code]=0);
+addEventListener('wheel',e=>setSlot((slot+(e.deltaY>0?1:2))%3));
+let md=0;
+cv0.addEventListener('mousedown',e=>{if(touch||e.button)return;mh=1;if(!locked&&started){md=1;const p=cv0.requestPointerLock();p&&p.catch&&p.catch(()=>{})}});
+addEventListener('mouseup',()=>{mh=0;md=0});
+addEventListener('mousemove',e=>{if(locked||md)look(e.movementX*.0022,e.movementY*.0022)});
+cv0.addEventListener('contextmenu',e=>e.preventDefault());
+document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===cv0;if(!locked&&!touch&&started&&!modal){started=false;mh=0;$('st').style.display='flex';$('go').textContent='Продолжить'}});
+$('go').onclick=()=>{$('st').style.display='none';started=true;if(touch){try{const e=document.documentElement,f=e.requestFullscreen||e.webkitRequestFullscreen;if(f&&!document.fullscreenElement){const r=f.call(e);const lk=()=>{try{screen.orientation.lock('landscape').catch(()=>{})}catch(_){}};r&&r.then?r.then(lk).catch(()=>{}):lk()}}catch(_){}}if(!touch){const p=cv0.requestPointerLock();p&&p.catch&&p.catch(()=>{})}};
+
+const TT={},jb=$('jb'),jk=$('jk');let jv={x:0,y:0},jc={x:84,y:300};
+const put=()=>{jb.style.left=jc.x+'px';jb.style.top=jc.y+'px'};
+const rest=()=>{const ld=innerWidth>innerHeight;jc={x:Math.max(90,innerWidth*.12),y:innerHeight-(ld?96:190)};put()};
+cv0.addEventListener('touchstart',e=>{e.preventDefault();if(!touch||jb.style.display!='block'){touch=true;document.body.classList.add('t');jb.style.display='block';rest()}
+ for(const t of e.changedTouches){const l=t.clientX<innerWidth/2;TT[t.identifier]={l,x:t.clientX,y:t.clientY};if(l){jc={x:cl(t.clientX,70,innerWidth*.42-60),y:cl(t.clientY,70,innerHeight-60)};put()}}},{passive:false});
+cv0.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches){const s=TT[t.identifier];if(!s)continue;
+ if(s.l){let dx=(t.clientX-jc.x)/50,dy=(t.clientY-jc.y)/50;const m=Math.hypot(dx,dy);if(m>1){dx/=m;dy/=m}jv={x:dx,y:dy};jk.style.transform='translate('+dx*30+'px,'+dy*30+'px)'}
+ else{look((t.clientX-s.x)*.005,(t.clientY-s.y)*.005);s.x=t.clientX;s.y=t.clientY}}},{passive:false});
+const te=e=>{for(const t of e.changedTouches){const s=TT[t.identifier];if(!s)continue;if(s.l){jv={x:0,y:0};jk.style.transform='';rest()}delete TT[t.identifier]}};
+cv0.addEventListener('touchend',te);cv0.addEventListener('touchcancel',te);
+
+function rs(){const w=innerWidth,h=innerHeight;R.setSize(w,h);cam.aspect=hc.aspect=w/h;cam.fov=w<h?85:70;cam.updateProjectionMatrix();hc.updateProjectionMatrix();bx=Math.min(.3,.2*hc.aspect);rest()}
+addEventListener('resize',rs);rs();if(touch)jb.style.display='block';
+
+const blk=(x,z)=>Math.abs(x)>7.65||Math.abs(z)>6.65||(ly<1.55&&Math.abs(x)<1.35&&Math.abs(z)<2.55)||col.some(c=>x>c[0]-.3&&x<c[2]+.3&&z>c[1]-.3&&z<c[3]+.3);
+let last=performance.now();
+function loop(now){
+ requestAnimationFrame(loop);
+ const dt=Math.min((now-last)/1000,.05);last=now;let mag=0;const play=started&&!modal;
+ if(play){
+  let ix=(K.KeyD?1:0)-(K.KeyA?1:0),iy=(K.KeyW?1:0)-(K.KeyS?1:0);
+  if(Math.hypot(jv.x,jv.y)>.12){ix+=jv.x;iy-=jv.y}
+  const h=Math.hypot(ix,iy);if(h>1){ix/=h;iy/=h}mag=Math.min(1,h);
+  const s=(K.ShiftLeft?4.4:2.7)*dt,c=Math.cos(P.yaw),n=Math.sin(P.yaw),dx=(ix*c-iy*n)*s,dz=(-ix*n-iy*c)*s;
+  if(!blk(P.x+dx,P.z))P.x+=dx;if(!blk(P.x,P.z+dz))P.z+=dz;
+ }
+ if(ly<1.55&&Math.abs(P.x)<1.35&&Math.abs(P.z)<2.55){if(Math.abs(P.x)/1.35>Math.abs(P.z)/2.55)P.x=(P.x<0?-1:1)*1.36;else P.z=(P.z<0?-1:1)*2.56}
+ mvm+=(mag-mvm)*Math.min(1,dt*8);hb+=dt*9*mvm;
+ ly+=Math.sign(lt-ly)*Math.min(Math.abs(lt-ly),dt*.5*(1+.6*UP.lf));L.position.y=ly;
+ ha+=(ho-ha)*Math.min(1,dt*4);hood.rotation.x=ha;seat(dt);struts();
+ ca+=((cp?1:0)-ca)*Math.min(1,dt*6);cap.position.set(ca*.12,.525+ca*.2,capZ);cap.rotation.z=-ca*.9;
+ bl.forEach(b=>{const u=b.userData,z=u.z0+(u.st?.06:0),d=(z-b.position.z)*Math.min(1,dt*10);b.position.z+=d;b.rotateY(d*80);b.visible=!(u.st&&b.position.z>u.z0+.055)});
+ spAnim(dt);cam.position.set(P.x,1.65+Math.sin(hb*2)*.015*mvm,P.z);cam.rotation.set(P.pit,P.yaw,0);
+ if(play&&(fc_++&1)==0){cam.updateMatrixWorld();rc.setFromCamera(ctr,cam);const h=rc.intersectObjects(world.children,true)[0];tg=h&&h.object.userData.t?h.object.userData:null}
+ while(cur<O.s.length&&SC[O.s[cur]]())cur++;
+ if(cur!==pc){pc=cur;drawScr();if(cur==O.s.length)toast('Заказ выполнен! +$'+O.pay)}
+ const e=play&&tg?ent(tg):null,ok=!!(e&&e.ok),hd=play&&!!(hold||mh||K.KeyE||K.KeyF);
+ const ns=tg?U(tg.n)+(!ok&&e&&e.why?' — '+e.why:''):'';if(ns!==ls){ls=ns;lab.textContent=ns}
+ crs.style.background=ok?'#7dff6b':'#fff';
+ if(tg!==tgp){tgp=tg;prog=0}
+ if(ok){if(hd){if(!dn){prog+=dt/e.dur;if(tg.t=='bolt')wt=.2;if(prog>=1){run(tg);prog=0;dn=1}}}else{dn=0;prog=Math.max(0,prog-dt*3)}}
+ else{prog=Math.max(0,prog-dt*4);if(!hd)dn=0}
+ const cn_='on'.repeat(ok?1:0),cl_=ok?(hd&&prog>0?'on h':'on'):'';if(ab.className!==cl_)ab.className=cl_;
+ if(ok){if(at.textContent!==e.v){at.textContent=e.v;at.style.fontSize=e.v.length>9?'12px':'15px'}}
+ rg.style.strokeDashoffset=276.5*(1-(ok?prog:0));
+ if((uc++&3)==0)ui();
+ const hn=held=='wheel'&&!heldOld;
+ const k_=sk();glows.forEach(o=>{const k=o.gk;o.visible=hintsOn&&(o.vf?!!o.vf(k_):k=='btn'?(k_=='lift'||k_=='lower'):k=='submit'?k_=='submit':k=='old'?k_=='off':k=='bin'?(k_=='bin'||k_=='plb'||k_=='pbin'):k=='rack'?(k_=='take'||(k_=='mount'&&!hn)):k=='hub'?(k_=='mount'&&hn&&o.s===T&&!T.w):k=='hood'?(k_=='hood'||k_=='hoodc'):k=='cap'?(k_=='capo'||k_=='capc'):k=='neck'?k_=='pour':!!(o.b.userData.s===T&&((k_=='unbolt'&&!o.b.userData.st)||(k_=='rebolt'&&o.b.userData.st&&T.w))))});
+ GY.opacity=GN.opacity=.15+.3*Math.abs(Math.sin(now*.004));
+ eq=Math.max(0,eq-dt*4);ua=Math.max(0,ua-dt*5);
+ hand.position.set(bx+Math.sin(hb)*.008*mvm,-.17-Math.abs(Math.cos(hb))*.01*mvm-eq*.3,-.5);hand.rotation.set(.04-(ua+prog*.4)*.25,.1,0);
+ if(wt>0){wt-=dt;sock.rotation.z+=dt*40;wr.position.z=Math.sin(now*.06)*.004}else wr.position.z=0;
+ if(pr>0){pr-=dt;if(pr<=0){oil++;toast('Масло залито ✔'+(O.oil>1?' '+oil+'/'+O.oil:''));tone(500,.1,'sine',.08)}}
+ cn.rotation.z=pr>0?-Math.sin((1-pr/1.3)*PI)*1.1:0;
+ if(wt>0&&now>nz.w){nz.w=now+70;tone(170+Math.random()*50,.08,'sawtooth',.05,140)}
+ if(Math.abs(lt-ly)>.002&&now>nz.l){nz.l=now+130;noise(.16,.06,260);tone(55,.15,'sawtooth',.04)}
+ if(pr>0&&now>nz.p){nz.p=now+80;tone(350+Math.random()*350,.07,'sine',.05,250)}
+ oilS.visible=pr>0&&cp>0;
+ R.clear();R.render(scene,cam);R.clearDepth();R.render(hs,hc);
+}
+requestAnimationFrame(loop);
+</script></body></html>
